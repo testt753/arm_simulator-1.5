@@ -156,8 +156,8 @@ void registers_destroy(registers r) {
                     if(*(r->registers[m][i])){
                         free(*(r->registers[m][i]));
                         *(r->registers[m][i]) = NULL;
+                        free(r->registers[m][i]);
                     } 
-                    free(r->registers[m][i]);
                     r->registers[m][i] = NULL;
                 }
             }

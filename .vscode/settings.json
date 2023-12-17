@@ -3,6 +3,7 @@
         "registers.h": "c",
         "arm_constants.h": "c",
         "trace.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "my_syscalls.h": "c"
     }
 }
