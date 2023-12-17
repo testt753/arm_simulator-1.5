@@ -27,7 +27,7 @@ Contact: Guillaume.Huard@imag.fr
 #define NB_MODES 7
 #define NB_REGS 16
 
-int8_t mode_index(uint8_t mode) {
+static mode_index(uint8_t mode) {
     const int8_t sys = arm_get_mode_number("SYS"), und = arm_get_mode_number("UND");
     const int8_t abt = arm_get_mode_number("ABT"), svc = arm_get_mode_number("SVC");
     const int8_t irq = arm_get_mode_number("IRQ"), fiq = arm_get_mode_number("FIQ");
@@ -49,6 +49,9 @@ int8_t mode_index(uint8_t mode) {
     }
 }
 
+static int valid_mode(uint8_t mode) {
+    return 0 <= mode && mode <= 31; 
+}
 struct registers_data {
     uint32_t ** registers[NB_MODES][NB_REGS]; 
     uint8_t current_mode;
@@ -176,6 +179,8 @@ void registers_destroy(registers r) {
 
  
 uint8_t registers_get_mode(registers r) {
+    if(!r)
+        return 0;
     return r->current_mode;  
 }
 
@@ -198,7 +203,7 @@ int registers_in_a_privileged_mode(registers r) {
 }
 
 uint32_t registers_read(registers r, uint8_t reg, uint8_t mode) {
-    if(r && arm_get_mode_name(mode))
+    if(r && reg < NB_REGS && reg >= 0 && valid_mode(mode))
         return **r->registers[mode][reg];
     else
         return 0;
@@ -212,14 +217,14 @@ uint32_t registers_read_cpsr(registers r) {
 }
 
 uint32_t registers_read_spsr(registers r, uint8_t mode) {
-    if ( !arm_get_mode_name(mode) || !registers_mode_has_spsr(mode)) {
+    if ( !valid_mode(mode) || !registers_mode_has_spsr(mode)) {
         return 0;
     }
     return r->spsrs[mode];
 }
 
 void registers_write(registers r, uint8_t reg, uint8_t mode, uint32_t value) {
-    if(r && reg < NB_REGS && reg >= 0 && arm_get_mode_name(mode)){
+    if(r && reg < NB_REGS && reg >= 0 && valid_mode(mode)){
         **r->registers[mode][reg] = value;
     }
 }
@@ -230,7 +235,7 @@ void registers_write_cpsr(registers r, uint32_t value) {
 }
 
 void registers_write_spsr(registers r, uint8_t mode, uint32_t value) {
-    if ( arm_get_mode_name(mode) && registers_mode_has_spsr(mode)) {
+    if ( valid_mode(mode) && registers_mode_has_spsr(mode)) {
         r->spsrs[mode] = value;
     }
 }
