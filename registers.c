@@ -1,88 +1,236 @@
 /*
-Armator - simulateur de jeu d'instruction ARMv5T à but pédagogique
+Armator - simulateur de jeu d'instruction ARMv5T ï¿½ but pï¿½dagogique
 Copyright (C) 2011 Guillaume Huard
 Ce programme est libre, vous pouvez le redistribuer et/ou le modifier selon les
-termes de la Licence Publique Générale GNU publiée par la Free Software
-Foundation (version 2 ou bien toute autre version ultérieure choisie par vous).
+termes de la Licence Publique Gï¿½nï¿½rale GNU publiï¿½e par la Free Software
+Foundation (version 2 ou bien toute autre version ultï¿½rieure choisie par vous).
 
-Ce programme est distribué car potentiellement utile, mais SANS AUCUNE
+Ce programme est distribuï¿½ car potentiellement utile, mais SANS AUCUNE
 GARANTIE, ni explicite ni implicite, y compris les garanties de
-commercialisation ou d'adaptation dans un but spécifique. Reportez-vous à la
-Licence Publique Générale GNU pour plus de détails.
+commercialisation ou d'adaptation dans un but spï¿½ciFIQue. Reportez-vous ï¿½ la
+Licence Publique Gï¿½nï¿½rale GNU pour plus de dï¿½tails.
 
-Vous devez avoir reçu une copie de la Licence Publique Générale GNU en même
-temps que ce programme ; si ce n'est pas le cas, écrivez à la Free Software
+Vous devez avoir reï¿½u une copie de la Licence Publique Gï¿½nï¿½rale GNU en mï¿½me
+temps que ce programme ; si ce n'est pas le cas, ï¿½crivez ï¿½ la Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
-États-Unis.
+ï¿½tats-Unis.
 
 Contact: Guillaume.Huard@imag.fr
-	 Bâtiment IMAG
+	 Bï¿½timent IMAG
 	 700 avenue centrale, domaine universitaire
-	 38401 Saint Martin d'Hères
+	 38401 Saint Martin d'Hï¿½res
 */
 #include "registers.h"
 #include "arm_constants.h"
 #include <stdlib.h>
 
+#define NB_MODES 7
+#define NB_REGS 16
+
+int8_t mode_index(uint8_t mode) {
+    const int8_t sys = arm_get_mode_number("SYS"), und = arm_get_mode_number("UND");
+    const int8_t abt = arm_get_mode_number("ABT"), svc = arm_get_mode_number("SVC");
+    const int8_t irq = arm_get_mode_number("IRQ"), fiq = arm_get_mode_number("FIQ");
+    const int8_t usr = arm_get_mode_number("USR");
+    if (mode == sys) {  // SYS
+        return 6;
+    } else if (mode == und) {  // UND
+        return 5;
+    } else if (mode == abt) {  // ABT
+        return 4;
+    } else if (mode == svc) {  // SVC
+        return 3;
+    } else if (mode == irq) {  // IRQ
+        return 2;
+    } else if (mode == fiq) {  // FIQ
+        return 1;
+    } else {  // USR
+        return 0;
+    }
+}
+
 struct registers_data {
-    /* À compléter... */
+    uint32_t ** registers[NB_MODES][NB_REGS]; 
+    uint8_t current_mode;
+    uint32_t cpsr;
+    uint32_t * spsrs[NB_MODES]; 
 };
 
+static uint8_t privileged_modes[NB_MODES] = {0, 1, 1, 1, 1, 1, 1};
+
 registers registers_create() {
-    registers r = NULL;
-    /* À compléter... */
+    registers r = malloc(sizeof(struct registers_data));
+    if (r) {
+        for(int m = 0; m < NB_MODES; m++){
+            for(int j = 0; j < NB_REGS; j++){
+                r->registers[m][j] = NULL;
+            }
+        }
+        r->cpsr = NULL;
+        for(int m = 0; m < NB_MODES; m++)
+            r->spsrs[m] = NULL;
+
+        for (int i = 0; i < NB_REGS; i++) {
+            r->registers[0][i] = malloc(sizeof(uint32_t *));
+            if (!r->registers[0][i]) {
+                registers_destroy(r);
+                return NULL;
+            }else{
+                *(r->registers[0][i]) = malloc(sizeof(uint32_t));
+                if(!*r->registers[0][i]){
+                    registers_destroy(r);
+                    return NULL;
+                }
+            }
+        }
+
+        // la mÃªme adresse mÃ©moire pour R0-R7 dans tous les modes
+        for (int m = 1; m <= 6; m++) {
+            for (int i = 0; i < 7; i++) {
+                r->registers[m][i] = r->registers[0][i];
+            }
+        }
+
+        // FIQ a son propre R8-R12
+        for (int i = 8; i <= 14; i++) {
+            r->registers[1][i] = malloc(sizeof(uint32_t *));
+            if (!r->registers[1][i]) {
+                registers_destroy(r);
+                return NULL;
+            }else{
+                *r->registers[1][i] = malloc(sizeof(uint32_t));
+                if(!*r->registers[1][i]){
+                    registers_destroy(r);
+                    return NULL;
+                }
+            }
+        }
+
+        // La mÃªme adresse mÃ©moire pour R13 et R14 entre USR et SYS
+        r->registers[SYS][13] = r->registers[0][13];
+        r->registers[SYS][14] = r->registers[0][14];
+
+        // Chaque mode FIQ a son propre R13 et R14
+        for (int m = 1; m < 6; m++) {
+            for (int i = 13; i < 15; i++) {
+                r->registers[1][i] = malloc(sizeof(uint32_t *));
+                if (!r->registers[m][i]) {
+                    registers_destroy(r);
+                    return NULL;
+                }else{
+                    *r->registers[m][i] = malloc(sizeof(uint32_t));
+                    if(!*r->registers[m][i]){
+                        registers_destroy(r);
+                        return NULL;
+                    }
+                }
+            }
+        }
+        
+
+        // adresse mÃ©moire pour R15 dans tous les modes
+        for (int m = 1; m <= 6; m++) {
+            r->registers[m][15] = r->registers[0][15];
+        }
+
+        // scpsr
+        for(int m = 1; m < 6; m++){
+            r->spsrs[m] = malloc(sizeof(uint32_t));
+            if (!r->spsrs[m]) {
+                registers_destroy(r);
+                return NULL;
+            }
+        }
+
+        r->cpsr = 0x00000010 | USR; // User mode, ARM state
+        r->current_mode = arm_get_mode_number("USR");
+    }
     return r;
 }
 
 void registers_destroy(registers r) {
-    /* À compléter... */
+    if (r) {
+        for (int m = 1; m <= 6; m++) {
+            for (int i = 0; i < NB_REGS; i++) {
+                if(r->registers[m][i]){
+                    if(*(r->registers[m][i])){
+                        free(*(r->registers[m][i]));
+                        *(r->registers[m][i]) = NULL;
+                    } 
+                    free(r->registers[m][i]);
+                    r->registers[m][i] = NULL;
+                }
+            }
+            if(r->spsrs[m]){
+                free(r->spsrs[m]);
+                r->spsrs[m] = NULL;
+            }
+        }
+        if(r->cpsr){
+            free(r->cpsr);
+            r->cpsr = NULL;
+        }
+        free(r);
+    }
 }
 
+ 
 uint8_t registers_get_mode(registers r) {
-    /* À compléter... */
-    return SVC;
+    return r->current_mode;  
 }
 
-static int registers_mode_has_spsr(registers r, uint8_t mode) {
-    /* À compléter... */
-    return 1;
+static int registers_mode_has_spsr(uint8_t mode) {
+    return (mode != arm_get_mode_number("USR")) && (mode != arm_get_mode_number("SYS"));
 }
 
 int registers_current_mode_has_spsr(registers r) {
-    return registers_mode_has_spsr(r, registers_get_mode(r));
+    if(r)
+        return registers_mode_has_spsr(r->current_mode);
+    else
+        return 0;
 }
 
 int registers_in_a_privileged_mode(registers r) {
-    /* À compléter... */
-    return 0;
+    if(r)
+        return privileged_modes[mode_index(r->current_mode)];
+    else
+        return 0;
 }
 
 uint32_t registers_read(registers r, uint8_t reg, uint8_t mode) {
-    uint32_t value = 0;
-    /* À compléter... */
-    return value;
+    if(r && arm_get_mode_name(mode))
+        return **r->registers[mode][reg];
+    else
+        return 0;
 }
 
 uint32_t registers_read_cpsr(registers r) {
-    uint32_t value = 0;
-    /* À compléter... */
-    return value;
+    if(r)
+        return r->cpsr;
+    else
+        return 0;
 }
 
 uint32_t registers_read_spsr(registers r, uint8_t mode) {
-    uint32_t value = 0;
-    /* À compléter... */
-    return value;
+    if ( !arm_get_mode_name(mode) || !registers_mode_has_spsr(mode)) {
+        return 0;
+    }
+    return r->spsrs[mode];
 }
 
 void registers_write(registers r, uint8_t reg, uint8_t mode, uint32_t value) {
-    /* À compléter... */
+    if(r && reg < NB_REGS && reg >= 0 && arm_get_mode_name(mode)){
+        **r->registers[mode][reg] = value;
+    }
 }
 
 void registers_write_cpsr(registers r, uint32_t value) {
-    /* À compléter... */
+    if(r)
+        r->cpsr = value;
 }
 
 void registers_write_spsr(registers r, uint8_t mode, uint32_t value) {
-    /* À compléter... */
+    if ( arm_get_mode_name(mode) && registers_mode_has_spsr(mode)) {
+        r->spsrs[mode] = value;
+    }
 }
