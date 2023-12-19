@@ -4,6 +4,8 @@
         "arm_constants.h": "c",
         "trace.h": "c",
         "stdlib.h": "c",
-        "my_syscalls.h": "c"
+        "my_syscalls.h": "c",
+        "arm_branch_other.h": "c",
+        "util.h": "c"
     }
 }
