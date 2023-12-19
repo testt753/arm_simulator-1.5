@@ -26,7 +26,7 @@ Contact: Guillaume.Huard@imag.fr
 #include "arm_branch_other.h"
 #include "util.h"
 #include "debug.h"
-
+#include "arm_core.h"
 
 void update_cpsr(arm_core p, int bZ, int bN, int bC, int bV) {
     // Masque pour ne modifier que les bits ZNCV
@@ -65,6 +65,23 @@ void update_cpsr(arm_core p, int bZ, int bN, int bC, int bV) {
 }
 
 
+uint32_t get_shift_imm(arm_core p, uint8_t imm, uint8_t rotate_amt) {
+
+	uint32_t shifter_op;
+	uint32_t shifter_carry_out;
+
+	if(rotate_amt == 0) {
+		shifter_op = imm;
+		shifter_carry_out = get_bit(arm_read_cpsr(p), C);
+	}
+	else {
+		shifter_op = (imm >> rotate_amt*2) | (imm << (32 - rotate_amt*2)); 
+		shifter_carry_out = get_bit(shifter_op, 31); 
+	}
+	update_cpsr(p, -1, -1, shifter_carry_out, -1);	
+	return shifter_op; 
+}
+
 uint32_t get_shift(arm_core p, uint32_t ins, int reg) {
 
 	uint8_t rm = GET_RM(ins);
@@ -75,14 +92,14 @@ uint32_t get_shift(arm_core p, uint32_t ins, int reg) {
 		amount = GET_SHIFT_IMM(ins);
 	else{
 		rs = GET_RS(ins);
-		v_rs = arm_read_register(p, rs);
-		amount = GET_BITS(v_rs, 7, 0);
+		v_rs = arm_read_register_internal(p, rs);
+		amount = get_bits(v_rs, 7, 0);
 	}
 	uint32_t result;
 	uint32_t shifter_carry_out = -1;
-	uint32_t value = arm_read_register(p, rm);
+	uint32_t value = arm_read_register_internal(p, rm);
 
-	switch(GEt_SHIFT(ins)) {
+	switch(GET_SHIFT(ins)) {
 
 		case LSL:     
 			if(amount == 0) { 
@@ -228,7 +245,8 @@ void ad_s(arm_core p, uint8_t s, uint8_t rd, uint64_t result, uint32_t op1, uint
 int dp(arm_core p, uint8_t rn, uint8_t rd, uint32_t ops, uint8_t opcd, uint8_t s){
 	uint64_t tmp;
 	uint32_t result;
-	uint32_t v_rn = arm_read_register(p, rn);
+	uint32_t v_rn = arm_read_register_internal(p, rn);
+	uint8_t NCflag, Cflag;
 	switch (opcd)
 	{
 		case AND:
@@ -253,18 +271,18 @@ int dp(arm_core p, uint8_t rn, uint8_t rd, uint32_t ops, uint8_t opcd, uint8_t s
 			ad_s(p, s, rd, tmp, v_rn, ops);
 			break;
 		case ADC:
-			uint8_t Cflag = arm_read_cpsr(p) >> C & 0x1;
+			Cflag = get_bit(arm_read_cpsr(p), C);
 			tmp = v_rn + ops + Cflag;
 			result = tmp;
 			ad_s(p, s, rd, tmp, v_rn, ops + Cflag);
 			break;
 		case SBC:
-			uint8_t NCflag = ~(arm_read_cpsr(p) >> C & 0x1);
+			NCflag = ~get_bit(arm_read_cpsr(p), C);
 			result = v_rn - ops - NCflag;
 			sb_s(p, s, rd, result, v_rn, ops - NCflag);
 			break;
 		case RSC:
-			uint8_t NCflag = (arm_read_cpsr(p) >> C & 0x1 == 0);
+			NCflag = ~get_bit(arm_read_cpsr(p), C);
 			result = ops - v_rn - NCflag;
 			sb_s(p, s, rd, result, ops, v_rn - NCflag);
 			break;
@@ -303,8 +321,9 @@ int dp(arm_core p, uint8_t rn, uint8_t rd, uint32_t ops, uint8_t opcd, uint8_t s
 		default:
 			return UNDEFINED_INSTRUCTION;
 		
-		arm_write_register(p, rd, result);
+		arm_write_register_internal(p, rd, result);
 	}
+	return 1;
 }
 /* Decoding functions for different classes of instructions */
 int arm_data_processing_shift(arm_core p, uint32_t ins) {
@@ -312,8 +331,8 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 		uint8_t b23 = get_bit(ins, 23), b22 = get_bit(ins, 22), b21 = get_bit(ins, 21);
 		uint8_t rs = GET_RS(ins);
 		uint8_t rm = GET_RM(ins);
-		uint32_t v_rs = arm_read_register(p, rs);
-		uint32_t v_rm = arm_read_register(p, rm);
+		uint32_t v_rs = arm_read_register_internal(p, rs);
+		uint32_t v_rm = arm_read_register_internal(p, rm);
 		// TERMINAISON ANTICIPE
 		uint64_t result = v_rm * v_rs;
 		if(!b23 && !b22){
@@ -322,10 +341,10 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 			v_rd = result & 0xFFFFFFFF;
 			if(b21){
 				uint8_t rn = GET_RN(ins);
-				uint32_t v_rn = arm_read_register(p, rn);
+				uint32_t v_rn = arm_read_register_internal(p, rn);
 				v_rd = v_rd + v_rn;
 			}
-			arm_write_register(p, rd, v_rd);
+			arm_write_register_internal(p, rd, v_rd);
 			if(GET_S(ins)){
 				int bN = (v_rd >> N) & 1;
 				int bZ = (v_rd == 0);
@@ -338,11 +357,11 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 				uint32_t v_rhi;
 				uint32_t v_rlo;
 				if(!b22){
-					uint32_t v_rhi = (result >> 32) & 0xFFFFFFFF;
-					uint32_t v_rlo = result & 0xFFFFFFFF;
+					v_rhi = (result >> 32) & 0xFFFFFFFF;
+					v_rlo = result & 0xFFFFFFFF;
 					if(b21){
-						uint32_t tv_rhi = arm_read_register(p, rhi);
-						uint32_t tv_rlo = arm_read_register(p, rlo);
+						uint32_t tv_rhi = arm_read_register_internal(p, rhi);
+						uint32_t tv_rlo = arm_read_register_internal(p, rlo);
 						uint64_t stemp = (uint64_t)v_rlo + (uint64_t)tv_rlo;
 						v_rlo = (uint32_t)stemp;
 						v_rhi = v_rhi + tv_rhi;
@@ -352,11 +371,11 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 					}
 				}else{
 					int64_t product = (int64_t)((int32_t)v_rm) * ((int32_t)v_rs);
-					uint32_t v_rhi = (uint32_t)(product >> 32) & 0xFFFFFFFF;
-					uint32_t v_rlo = (uint32_t) product & 0xFFFFFFFF;
+					v_rhi = (uint32_t)(product >> 32) & 0xFFFFFFFF;
+					v_rlo = (uint32_t) product & 0xFFFFFFFF;
 					if(b21){
-						uint32_t tv_rhi = arm_read_register(p, rhi);
-						uint32_t tv_rlo = arm_read_register(p, rlo);
+						uint32_t tv_rhi = arm_read_register_internal(p, rhi);
+						uint32_t tv_rlo = arm_read_register_internal(p, rlo);
 						uint64_t stemp = (uint64_t)v_rlo + (uint64_t)tv_rlo;
 						v_rlo = (uint32_t)stemp;
 						v_rhi = v_rhi + tv_rhi;
@@ -365,8 +384,8 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 						}
 					}
 				}
-				arm_write_register(p, rhi, v_rhi);
-				arm_write_register(p, rlo, v_rlo);
+				arm_write_register_internal(p, rhi, v_rhi);
+				arm_write_register_internal(p, rlo, v_rlo);
 				if(GET_S(ins)){
 					int bN = (v_rhi >> N) & 1;
 					int bZ = (v_rhi == 0) && (v_rlo == 0);
@@ -381,35 +400,41 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 		uint32_t ops;
 		uint8_t opcd = GET_OPCD(ins);
 		uint8_t s = GET_S(ins);
-		
-		int pc = 0;
+
 		if(!get_bit(ins, 4)){
 			if(rn != 15)
 				ops = get_shift(p, ins, 0);
 			else{
 				uint64_t tmp;
-				ops = arm_read_register(p,GET_RM(ins));
-				tmp = ops + 8;
-				ops = tmp;
-				update_cpsr(p, -1, -1, tmp > 0xFFFFFFFF, -1); 
+				ops = arm_read_register_internal(p,GET_RM(ins));
+				// + 8 ?
+				update_cpsr(p, -1, -1, ops > 0xFFFFFFFF, -1); 
 			}
 		}else{
 			if(rn != 15 && GET_RS(ins) != 15)
 				ops = get_shift(p, ins, 1);
 			else{
 				uint64_t tmp;
-				ops = arm_read_register(p,GET_RM(ins));
-				tmp = ops + 8;
-				ops = tmp;
-				update_cpsr(p, -1, -1, tmp > 0xFFFFFFFF, -1); 
+				ops = arm_read_register_internal(p,GET_RM(ins));
+				// + 8 ?
+				update_cpsr(p, -1, -1, ops > 0xFFFFFFFF, -1); 
 			}
 		}
-		dp(p, rn, rd, ops, opcd, s);
+		return dp(p, rn, rd, ops, opcd, s);
 	}
     return UNDEFINED_INSTRUCTION;
 }
 
 int arm_data_processing_immediate_msr(arm_core p, uint32_t ins) {
+	if(IS_MISC(ins)) {
+	}else {
+		uint8_t rn = GET_RN(ins);
+		uint8_t rd = GET_RD(ins);
+		uint32_t ops = get_shift_imm(p, GET_IMM8(ins), GET_ROT_IMM(ins));
+		uint8_t opcd = GET_OPCD(ins);
+		uint8_t s = GET_S(ins);
+		return dp(p, rn, rd, ops, opcd, s);
+	}
     return UNDEFINED_INSTRUCTION;
 }
 

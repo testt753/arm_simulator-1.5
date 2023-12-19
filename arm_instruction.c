@@ -80,8 +80,11 @@ int check_condition(arm_core r, uint8_t cond) {
             return ((cpsr & Z) != 0 && (cpsr & N) != (cpsr & V));
 
         case AL:
-            return 1; 
+            return 1;
 
+        case UN:
+            return 1;
+            
         default:
             return 0;
     }  
@@ -119,7 +122,7 @@ int execute_instruction(arm_core p, uint32_t x) {
             return arm_coprocessor_load_store(p, x);
 
         case 0b111:
-            return rm_coprocessor_others_swi(p, x);
+            return arm_coprocessor_others_swi(p, x);
 
         default:
             return -1;

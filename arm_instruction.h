@@ -39,6 +39,7 @@ Contact: Guillaume.Huard@imag.fr
 #define GT 0xC 
 #define LE 0xD 
 #define AL 0xE
+#define UN 0xF
 
 int arm_step(arm_core p);
 

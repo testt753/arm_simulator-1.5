@@ -8,6 +8,7 @@
         "arm_branch_other.h": "c",
         "util.h": "c",
         "arm_data_processing.h": "c",
-        "arm_instruction.h": "c"
+        "arm_instruction.h": "c",
+        "type_traits": "c"
     }
 }
