@@ -23,7 +23,6 @@ Contact: Guillaume.Huard@imag.fr
 #include "arm_branch_other.h"
 #include "arm_constants.h"
 #include "util.h"
-#include "arm_core.h"
 #include <debug.h>
 #include <stdlib.h>
 
@@ -34,12 +33,12 @@ int arm_branch(arm_core p, uint32_t ins) {
     }else{
         int32_t msb = get_bit(ins, 31);
         int32_t offset = ins | (!msb * 0xFFFFFFFF); 
-        uint32_t pc = arm_read_register_internal(p, 15);
+        uint32_t pc = arm_read_register(p, 15) + 8;
         if(GET_LINK(ins)){
-            arm_write_register_internal(p, 14, pc - 4);
+            arm_write_register(p, 14, pc - 4);
         }
         offset = offset << 2;
-        arm_write_register_internal(p, 15, pc + offset);
+        arm_write_register(p, 15, pc + offset);
         return 1;
     }
     return UNDEFINED_INSTRUCTION;
