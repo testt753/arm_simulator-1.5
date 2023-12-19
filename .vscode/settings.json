@@ -6,6 +6,8 @@
         "stdlib.h": "c",
         "my_syscalls.h": "c",
         "arm_branch_other.h": "c",
-        "util.h": "c"
+        "util.h": "c",
+        "arm_data_processing.h": "c",
+        "arm_instruction.h": "c"
     }
 }

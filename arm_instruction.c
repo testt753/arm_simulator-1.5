@@ -31,70 +31,55 @@ Contact: Guillaume.Huard@imag.fr
 // Dans arm_instruction.c
 
 
-#define COND_EQ = 0x0
-#define COND_NE = 0x1
-#define COND_CS = 0x2  
-#define COND_CC = 0x3
-#define COND_MI = 0x4
-#define COND_PL = 0x5
-#define COND_VS = 0x6
-#define COND_VC = 0x7
-#define COND_HI = 0x8
-#define COND_LS = 0x9 
-#define COND_GE = 0xA
-#define COND_LT = 0xB  
-#define COND_GT = 0xC 
-#define COND_LE = 0xD 
-#define COND_AL = 0xE
+
 
 int check_condition(arm_core r, uint8_t cond) {
     uint32_t cpsr  = arm_read_cpsr(r);
 
     switch(cond) {
-
-        case 0x0:
+        case EQ:
             return (cpsr & Z) != 0;
 
-        case 0x1:
+        case NE:
             return (cpsr & Z) == 0;
 
-        case 0x2:
+        case CS:
             return (cpsr & C) != 0;
 
-        case 0x3:
+        case CC:
             return (cpsr & C) == 0;
 
-        case 0x4:
+        case MI:
             return (cpsr & N) != 0;
 
-        case 0x5:
+        case PL:
             return (cpsr & N) == 0;
 
-        case 0x6:
+        case VS:
             return (cpsr & V) != 0; 
 
-        case 0x7:
+        case VC:
             return (cpsr & V) == 0;
 
-        case 0x8:
+        case HI:
             return (cpsr & C) != 0 && (cpsr & Z) == 0;
         
-        case 0x9:
+        case LS:
             return (cpsr & C) == 0 && (cpsr & Z) != 0;
         
-        case 0xA:
+        case GE:
             return ((cpsr & N) == (cpsr & V));
 
-        case 0xB:
+        case LT:
             return ((cpsr & N) != (cpsr & V));
 
-        case 0xC:
+        case GT:
             return ((cpsr & Z) == 0 && (cpsr & N) == (cpsr & V));
 
-        case 0xD:
+        case LE:
             return ((cpsr & Z) != 0 && (cpsr & N) != (cpsr & V));
 
-        case 0xE:
+        case AL:
             return 1; 
 
         default:
