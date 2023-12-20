@@ -219,7 +219,7 @@ void logic_s(arm_core p, uint8_t s, uint8_t rd, uint32_t result){
 			arm_write_cpsr(p, arm_read_spsr(p));
 		}
 	} else if(s){
-		update_cpsr(p, !result, get_bit(result, 31), -1, -1);
+		update_cpsr(p, result == 0, get_bit(result, 31), -1, -1);
 	}
 }
 
@@ -229,7 +229,7 @@ void sb_s(arm_core p, uint8_t s, uint8_t rd, uint32_t result, uint32_t op1, uint
 			arm_write_cpsr(p, arm_read_spsr(p));
 		}
 	} else if(s){
-		update_cpsr(p, !result, get_bit(result, 31), !BorrowFrom(op1, op2), OverflowFrom(op1, op2, result, 1));
+		update_cpsr(p, result == 0, get_bit(result, 31), !BorrowFrom(op1, op2), OverflowFrom(op1, op2, result, 1));
 	}
 }
 void ad_s(arm_core p, uint8_t s, uint8_t rd, uint64_t result, uint32_t op1, uint32_t op2){
@@ -238,91 +238,105 @@ void ad_s(arm_core p, uint8_t s, uint8_t rd, uint64_t result, uint32_t op1, uint
 			arm_write_cpsr(p, arm_read_spsr(p));
 		}
 	} else if(s){
-		update_cpsr(p, !result, get_bit(result, 31), result > 0xFFFFFFFF, OverflowFrom(op1, op2, (uint32_t)result, 0));
+		update_cpsr(p, result==0, get_bit(result, 31), result > 0xFFFFFFFF, OverflowFrom(op1, op2, (uint32_t)result, 0));
 	}
 }
 int dp(arm_core p, uint8_t rn, uint8_t rd, uint32_t ops, uint8_t opcd, uint8_t s){
 	uint64_t tmp;
-	uint32_t result;
+	uint32_t result = 0;
 	uint32_t v_rn = arm_read_register(p, rn);
 	uint8_t NCflag, Cflag;
 	switch (opcd)
 	{
 		case AND:
 			result = v_rn & ops;
+			arm_write_register(p, rd, result);
 			logic_s(p, s, rd, result);
-			break;
+			return 0;
 		case EOR:
 			result = v_rn ^ ops;
+			arm_write_register(p, rd, result);
 			logic_s(p, s, rd, result);
-			break;
+			return 0;
 		case SUB:
 			result = v_rn - ops;
+			arm_write_register(p, rd, result);
 			sb_s(p, s, rd, result, v_rn, ops);
-			break;
+			return 0;
 		case RSB:
 			result = ops - v_rn;
+			arm_write_register(p, rd, result);
 			sb_s(p, s, rd, result, ops, v_rn);
-			break;
+			return 0;
 		case ADD:
 			tmp = v_rn + ops;
 			result = tmp;
+			arm_write_register(p, rd, result);
 			ad_s(p, s, rd, tmp, v_rn, ops);
-			break;
+			return 0;
 		case ADC:
 			Cflag = get_bit(arm_read_cpsr(p), C);
 			tmp = v_rn + ops + Cflag;
 			result = tmp;
+			arm_write_register(p, rd, result);
 			ad_s(p, s, rd, tmp, v_rn, ops + Cflag);
-			break;
+			return 0;
 		case SBC:
 			NCflag = ~get_bit(arm_read_cpsr(p), C);
 			result = v_rn - ops - NCflag;
+			arm_write_register(p, rd, result);
 			sb_s(p, s, rd, result, v_rn, ops - NCflag);
-			break;
+			return 0;
 		case RSC:
 			NCflag = ~get_bit(arm_read_cpsr(p), C);
 			result = ops - v_rn - NCflag;
+			arm_write_register(p, rd, result);
 			sb_s(p, s, rd, result, ops, v_rn - NCflag);
-			break;
+			return 0;
 		case TST:
 			result = v_rn & ops;
+			arm_write_register(p, rd, result);
 			logic_s(p, s, rd, result);
-			return 1;
+			return 0;
 		case TEQ:
 			result = v_rn ^ ops;
+			arm_write_register(p, rd, result);
 			logic_s(p, s, rd, result);
-			return 1;
+			return 0;
 		case CMP:
 			result = v_rn - ops;
+			arm_write_register(p, rd, result);
 			sb_s(p, s, rd, result, v_rn, ops);
-			return 1;
+			return 0;
 		case CMN:
 			tmp = v_rn + ops;
+			arm_write_register(p, rd, result);
 			ad_s(p, s, rd, tmp, v_rn, ops);
-			return 1;
+			return 0;
 		case ORR:
 			result = v_rn | ops;
+			arm_write_register(p, rd, result);
 			logic_s(p, s, rd, result);
-			break;
+			return 0;
 		case MOV:
 			result = ops;
+			arm_write_register(p, rd, result);
 			logic_s(p, s, rd, result);
-			break;
+			return 0;
 		case BIC:
 			result = v_rn & ~ ops;
+			arm_write_register(p, rd, result);
 			logic_s(p, s, rd, result);
-			break;
+			return 0;
 		case MVN:
 			result = ~ops;
+			arm_write_register(p, rd, result);
 			logic_s(p, s, rd, result);
-			break;
+			return 0;
 		default:
 			return UNDEFINED_INSTRUCTION;
-		
-		arm_write_register(p, rd, result);
 	}
-	return 1;
+	return UNDEFINED_INSTRUCTION;
 }
 /* Decoding functions for different classes of instructions */
 int arm_data_processing_shift(arm_core p, uint32_t ins) {
@@ -392,7 +406,7 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 				}
 			}
 		}
-		return 1;
+		return 0;
 	}else if (GET_GROUP(ins) == 0b000){
 		uint8_t rn = GET_RN(ins);
 		uint8_t rd = GET_RD(ins);
@@ -404,21 +418,21 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 			if(rn != 15)
 				ops = get_shift(p, ins, 0);
 			else{
-				uint64_t tmp;
+				//uint64_t tmp;
 				ops = arm_read_register(p,GET_RM(ins));
-				tmp = ops + 8;
-				ops = tmp;
-				update_cpsr(p, -1, -1, tmp > 0xFFFFFFFF, -1); 
+				//tmp = ops + 8;
+				//ops = tmp;
+				//update_cpsr(p, -1, -1, ops > 0xFFFFFFFF, -1); 
 			}
 		}else{
 			if(rn != 15 && GET_RS(ins) != 15)
 				ops = get_shift(p, ins, 1);
 			else{
-				uint64_t tmp;
+				//uint64_t tmp;
 				ops = arm_read_register(p,GET_RM(ins));
-				tmp = ops + 8;
-				ops = tmp;
-				update_cpsr(p, -1, -1, tmp > 0xFFFFFFFF, -1); 
+				//tmp = ops + 8;
+				//ops = tmp;
+				//update_cpsr(p, -1, -1, tmp > 0xFFFFFFFF, -1); 
 			}
 		}
 		return dp(p, rn, rd, ops, opcd, s);

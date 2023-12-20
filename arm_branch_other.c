@@ -29,17 +29,16 @@ Contact: Guillaume.Huard@imag.fr
 
 int arm_branch(arm_core p, uint32_t ins) {
     if(GET_COND(ins) == 0xF){
-        return 1;
+        return 0;
     }else{
-        int32_t msb = get_bit(ins, 31);
-        int32_t offset = ins | (!msb * 0xFFFFFFFF); 
-        uint32_t pc = arm_read_register(p, 15) + 8;
+        uint32_t offset = ins & 0x00FFFFFF;
+        int32_t signed_offset = (int32_t)(offset << 8) >> 6; // shift left 8 bits, then sign extend to 32 bits
+        uint32_t pc = arm_read_register(p, 15);
         if(GET_LINK(ins)){
             arm_write_register(p, 14, pc - 4);
         }
-        offset = offset << 2;
-        arm_write_register(p, 15, pc + offset);
-        return 1;
+        arm_write_register(p, 15, pc + signed_offset);
+        return 0;
     }
     return UNDEFINED_INSTRUCTION;
 }

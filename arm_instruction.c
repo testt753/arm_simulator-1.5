@@ -30,54 +30,51 @@ Contact: Guillaume.Huard@imag.fr
 
 // Dans arm_instruction.c
 
-
-
-
 int check_condition(arm_core r, uint8_t cond) {
     uint32_t cpsr  = arm_read_cpsr(r);
 
     switch(cond) {
         case EQ:
-            return (cpsr & Z) != 0;
+            return get_bit(cpsr, Z) != 0;
 
         case NE:
-            return (cpsr & Z) == 0;
+            return get_bit(cpsr, Z) == 0;
 
         case CS:
-            return (cpsr & C) != 0;
+            return get_bit(cpsr, C) != 0;
 
         case CC:
-            return (cpsr & C) == 0;
+            return get_bit(cpsr, C) == 0;
 
         case MI:
-            return (cpsr & N) != 0;
+            return get_bit(cpsr, N) != 0;
 
         case PL:
-            return (cpsr & N) == 0;
+            return get_bit(cpsr, N) == 0;
 
         case VS:
-            return (cpsr & V) != 0; 
+            return get_bit(cpsr, V) != 0; 
 
         case VC:
-            return (cpsr & V) == 0;
+            return get_bit(cpsr, V) == 0;
 
         case HI:
-            return (cpsr & C) != 0 && (cpsr & Z) == 0;
+            return get_bit(cpsr, C) != 0 && get_bit(cpsr, Z) == 0;
         
         case LS:
-            return (cpsr & C) == 0 && (cpsr & Z) != 0;
+            return get_bit(cpsr, C) == 0 && get_bit(cpsr, Z) != 0;
         
         case GE:
-            return ((cpsr & N) == (cpsr & V));
+            return (get_bit(cpsr, N) == get_bit(cpsr, V));
 
         case LT:
-            return ((cpsr & N) != (cpsr & V));
+            return (get_bit(cpsr, N) != get_bit(cpsr, V));
 
         case GT:
-            return ((cpsr & Z) == 0 && (cpsr & N) == (cpsr & V));
+            return (get_bit(cpsr, Z) == 0 && get_bit(cpsr, N) == get_bit(cpsr, V));
 
         case LE:
-            return ((cpsr & Z) != 0 && (cpsr & N) != (cpsr & V));
+            return (get_bit(cpsr, Z) != 0 && get_bit(cpsr, N) != get_bit(cpsr, V));
 
         case AL:
             return 1;
@@ -132,10 +129,10 @@ int execute_instruction(arm_core p, uint32_t x) {
 int arm_execute_instruction(arm_core p) {
     uint32_t instruction = 0;
     if (!p)  
-        return 0;
+        return -1;
     int error = arm_fetch(p, &instruction);
     if (error == -1) 
-        return 0;
+        return -1;
 
     if(check_condition(p, GET_COND(instruction))){
         return execute_instruction(p, instruction);
