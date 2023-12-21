@@ -67,5 +67,4 @@ int BorrowFrom(uint32_t op1, uint32_t op2) {
   } else {
     return 0;
   }
-  
 }

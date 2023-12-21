@@ -23,6 +23,7 @@ Contact: Guillaume.Huard@imag.fr
 #ifndef __ARM_CONSTANTS_H__
 #define __ARM_CONSTANTS_H__
 #include <stdint.h>
+#include "arm_core.h"
 
 /* ARM Modes */
 #define USR 0x10
@@ -84,7 +85,13 @@ Contact: Guillaume.Huard@imag.fr
 #define GET_SHIFT_IMM(x) get_bits(x, 11, 7)
 #define GET_SHIFT(x) get_bits(x, 6, 5)
 #define GET_IMM8(x) get_bits(x, 7, 0)
+#define GET_IMM12(x) get_bits(x, 11, 0)
 #define GET_LINK(x) get_bit(x, 24)
+#define GET_L(x) get_bit(x, 20)
+#define GET_W(x) get_bit(x, 21)
+#define GET_B(x) get_bit(x, 22)
+#define GET_U(x) get_bit(x, 23)
+#define GET_P(x) get_bit(x, 24)
 #define IS_MULT(x) (GET_COND(x) !=  0b1111 && get_bits(x, 27, 24) == 0b0000 && get_bits(x, 7, 4) == 0b1001)  
 #define IS_LS(x) (GET_COND(x) !=  0b1111 && GET_GROUP(x) == 0b000 && get_bits(x, 7, 4) == 0b1001 && !( get_bit(x ,24) && get_bits(x, 6, 5) == 0b00))    
 #define IS_MISC(x) ( GET_COND(x) !=  0b1111 && !( !get_bit(x, 25) &&  get_bit(x, 7) && get_bit(x, 4)) && get_bits(x, 27, 20) == 0b00010000)
@@ -93,5 +100,6 @@ char *arm_get_exception_name(unsigned char exception);
 char *arm_get_mode_name(uint8_t mode);
 int8_t arm_get_mode_number(char *name);
 char *arm_get_register_name(uint8_t reg);
-
+uint32_t get_shift(arm_core p, uint32_t ins, int S, int reg);
+void update_cpsr(arm_core p, int bZ, int bN, int bC, int bV);
 #endif

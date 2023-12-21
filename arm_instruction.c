@@ -104,7 +104,7 @@ int execute_instruction(arm_core p, uint32_t x) {
             return arm_data_processing_immediate_msr(p, x);
             
         case 0b010:
-            return arm_load_store_multiple(p, x);
+            return arm_load_store(p, x);
         
         case 0b011:
             return arm_load_store(p, x);

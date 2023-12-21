@@ -10,6 +10,8 @@
         "arm_data_processing.h": "c",
         "arm_instruction.h": "c",
         "type_traits": "c",
-        "arm_core.h": "c"
+        "arm_core.h": "c",
+        "arm_load_store.h": "c",
+        "stdint.h": "c"
     }
 }

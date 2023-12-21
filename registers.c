@@ -144,7 +144,6 @@ registers registers_create() {
                 return NULL;
             }
         }
-
         r->cpsr = 0x00000010 | USR; // User mode, ARM state
         r->current_mode = USR;
     }
