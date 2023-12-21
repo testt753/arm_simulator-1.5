@@ -1,1 +1,2 @@
-# dummy
+insertion_sort.o: insertion_sort.c my_syscalls.h
+my_syscalls.h:
