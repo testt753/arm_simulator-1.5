@@ -122,17 +122,17 @@ int execute_instruction(arm_core p, uint32_t x) {
             return arm_coprocessor_others_swi(p, x);
 
         default:
-            return -1;
+            return INTERRUPT;
     }
 }
 
 int arm_execute_instruction(arm_core p) {
     uint32_t instruction = 0;
     if (!p)  
-        return -1;
+        return INTERRUPT;
     int error = arm_fetch(p, &instruction);
-    if (error == -1) 
-        return -1;
+    if (error == INTERRUPT) 
+        return INTERRUPT;
 
     if(check_condition(p, GET_COND(instruction))){
         return execute_instruction(p, instruction);
