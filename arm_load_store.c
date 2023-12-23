@@ -20,6 +20,9 @@ Contact: Guillaume.Huard@imag.fr
 	 700 avenue centrale, domaine universitaire
 	 38401 Saint Martin d'H�res
 */
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "arm_load_store.h"
 #include "arm_exception.h"
 #include "arm_constants.h"
@@ -275,6 +278,130 @@ int arm_load_store(arm_core p, uint32_t ins) {
 }
 
 int arm_load_store_multiple(arm_core p, uint32_t ins) {
+    uint8_t rn = GET_RN(ins);
+	uint8_t reg_select=0;
+	uint32_t addr;
+    uint32_t addr_start,addr_end;
+	//calcul du nombre de registre à 1 dans l'instruction
+	for(int i=0;i<16;i++){
+		if (get_bit(ins,i)){
+			reg_select++;
+		}
+	}
+//definition des adresses start et end 
+
+	//si on incremente apres p=0 & u=1
+	if (!GET_P(ins) && GET_U(ins)){
+		addr_start=arm_read_register(p,rn);
+		addr_end=arm_read_register(p,rn)+((reg_select*4)-4);
+		if (GET_W(ins)){
+			rn=arm_read_register(p,rn)+(reg_select*4);
+		}
+	}
+
+	//si on incremente avant p=1 & u=1
+	if (GET_P(ins) && GET_U(ins)){
+		addr_start=arm_read_register(p,rn)+4;
+		addr_end=arm_read_register(p,rn)+(reg_select*4);
+		if (GET_W(ins)){
+			rn=arm_read_register(p,rn)+(reg_select*4);
+		}
+	}
+
+	//si on decremente apres p=0 & u=0
+	if (!GET_P(ins) && !GET_U(ins)){
+		addr_start=arm_read_register(p,rn)-((reg_select*4)+4);
+		addr_end=arm_read_register(p,rn);
+		if (GET_W(ins)){
+			rn=arm_read_register(p,rn)-(reg_select*4);
+		}
+	}
+
+	//si on decremente avant p=1 & u=0
+	if (GET_P(ins) && !GET_U(ins)){
+		addr_start=arm_read_register(p,rn)-(reg_select*4);
+		addr_end=arm_read_register(p,rn)-4;
+		if (GET_W(ins)){
+			rn=arm_read_register(p,rn)-(reg_select*4);
+		}
+	}
+
+    if(GET_GROUP(ins) == 0b100){
+		if(GET_B(ins)){						// si bit B=1
+			//LDM(2)
+			if(!get_bit(ins,15)){			// si pc=0
+				if (GET_L(ins)){
+					addr= addr_start; 
+					for(int i=0;i<15;i++){
+						if (get_bit(ins,i)){
+							uint32_t data_ri;
+							arm_read_word(p,addr,&data_ri);
+							arm_write_usr_register(p,i,data_ri);
+							addr=addr+4;
+						}
+					}
+					//assert end_address == address - 4
+					if (addr_end!=addr-4){
+						printf("Erreur: Dans load_store_multiple end_addresse != adresse-4\n");
+						exit(0);
+					}
+				}
+				
+			}
+			//LDM(3)
+			else{
+				addr= addr_start; 
+				for(int i=0;i<15;i++){
+					if (get_bit(ins,i)){
+						uint32_t data_ri;
+						arm_read_word(p,addr,&data_ri);
+						addr=addr+4;
+					}
+				}
+				// if current mode has spsr
+				if (arm_read_cpsr(p)){
+					arm_write_cpsr(p,arm_read_spsr(p));
+				}
+
+				uint32_t value;
+				arm_read_word(p,addr,&value);
+				arm_write_register(p,15,value);
+				addr=addr+4;
+				if (addr_end!=addr-4){
+					printf("Erreur: Dans load_store_multiple end_addresse != adresse-4\n");
+					exit(0);
+				}
+			}
+		}
+		//LDM(1)
+		else{
+			addr= addr_start;
+			for(int i=0;i<15;i++){
+				if (get_bit(ins,i)){
+					uint32_t data_ri;
+					arm_read_word(p,addr,&data_ri);
+					addr=addr+4;
+				}
+			}
+			if (get_bit(ins,15)){
+				uint32_t value;
+				arm_read_word(p,addr,&value);
+				arm_write_register(p,15,value&=0xFFFFFFFE);
+				
+				//Tbit=value[0]
+				uint32_t tmp_cpsr;
+				tmp_cpsr=arm_read_cpsr(p);
+				tmp_cpsr=clr_bit(tmp_cpsr,5);
+				arm_write_cpsr(p,tmp_cpsr);
+
+				addr=addr+4;
+			}
+			if (addr_end!=addr-4){
+					printf("Erreur: Dans load_store_multiple end_addresse != adresse-4\n");
+					exit(0);
+				}
+		}
+	}	
     return UNDEFINED_INSTRUCTION;
 }
 
