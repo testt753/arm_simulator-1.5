@@ -291,6 +291,8 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 //definition des adresses start et end 
 
 	//si on incremente apres p=0 & u=1
+
+	// if else if else iff ... pas des if if if if
 	if (!GET_P(ins) && GET_U(ins)){
 		addr_start=arm_read_register(p,rn);
 		addr_end=arm_read_register(p,rn)+((reg_select*4)-4);
@@ -326,11 +328,11 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 		}
 	}
 
-    if(GET_GROUP(ins) == 0b100){
+    if(GET_GROUP(ins) == 0b100){ // pas utile
 		if(GET_B(ins)){						// si bit B=1
 			//LDM(2)
-			if(!get_bit(ins,15)){			// si pc=0
-				if (GET_L(ins)){
+			if(!get_bit(ins,15)){			// si pc=0 ?
+				if (GET_L(ins)){ // faut verifier avant si on est dans load ou store
 					addr= addr_start; 
 					for(int i=0;i<15;i++){
 						if (get_bit(ins,i)){
@@ -392,7 +394,7 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 				uint32_t tmp_cpsr;
 				tmp_cpsr=arm_read_cpsr(p);
 				tmp_cpsr=clr_bit(tmp_cpsr,5);
-				arm_write_cpsr(p,tmp_cpsr);
+				arm_write_cpsr(p,tmp_cpsr); // y'a une fonction pour update le CPSR
 
 				addr=addr+4;
 			}
