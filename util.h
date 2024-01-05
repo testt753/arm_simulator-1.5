@@ -45,4 +45,6 @@ uint32_t ror(uint32_t value, uint8_t rotation);
 int is_big_endian();
 int OverflowFrom(int32_t op1, int32_t op2, int32_t result, int isSub);
 int BorrowFrom(uint32_t op1, uint32_t op2);
+int SignedDoesSat(int32_t x, int32_t n);
+int32_t SignedSat(int32_t x, int32_t n);
 #endif

@@ -86,16 +86,16 @@ int check_condition(arm_core r, uint8_t cond) {
             return 0;
     }  
 }
-
+//TODO EXCEPTION
 int execute_instruction(arm_core p, uint32_t x) {
     switch (GET_GROUP(x)) {
         case 0b000:
             if (IS_MULT(x))  
                 return arm_data_processing_shift(p, x);
             else if (IS_LS(x))
-                return arm_load_store(p, x);
+                return arm_load_store(p, x); //TODO
             else if (IS_MISC(x)) 
-                return arm_miscellaneous(p, x);
+                return arm_miscellaneous(p, x); //TODO
             else {
                 return arm_data_processing_shift(p, x);
             }
@@ -110,7 +110,7 @@ int execute_instruction(arm_core p, uint32_t x) {
             return arm_load_store(p, x);
 
         case 0b100:
-            return arm_load_store_multiple(p, x);
+            return arm_load_store_multiple(p, x); //TODO
 
         case 0b101:
             return arm_branch(p, x);

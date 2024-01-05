@@ -68,3 +68,30 @@ int BorrowFrom(uint32_t op1, uint32_t op2) {
     return 0;
   }
 }
+
+int SignedDoesSat(int32_t x, int32_t n) {
+  int32_t min = -(1 << (n-1));
+  int32_t max = (1 << (n-1)) - 1;
+  
+  if(x >= min && x <= max) {
+    return 0; 
+  }
+  else {
+    return 1;
+  }
+}
+
+int32_t SignedSat(int32_t x, int32_t n) {
+  int32_t min = - (1 << (n-1));
+  int32_t max = (1 << (n-1)) - 1;
+  
+  if(x < min) {
+    return min; 
+  }
+  else if (x > max) {
+    return max;
+  }
+  else {
+    return x;
+  }
+}

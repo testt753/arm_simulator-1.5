@@ -92,9 +92,16 @@ Contact: Guillaume.Huard@imag.fr
 #define GET_B(x) get_bit(x, 22)
 #define GET_U(x) get_bit(x, 23)
 #define GET_P(x) get_bit(x, 24)
+#define GET_R(x) get_bit(x, 22)
+#define GET_X(x) get_bit(x, 5)
+#define GET_Y(x) get_bit(x, 6)
+#define GET_FIELD_MASK(x) get_bits(x, 19, 16)
+#define GET_MISC(x) get_bits(x, 7, 4)
+#define GET_Q_OP(x) get_bits(x, 22, 21)
+#define GET_MISC_MUL_OP(x) get_bits(x, 22, 21)
 #define IS_MULT(x) (GET_COND(x) !=  0b1111 && get_bits(x, 27, 24) == 0b0000 && get_bits(x, 7, 4) == 0b1001)  
 #define IS_LS(x) (GET_COND(x) !=  0b1111 && GET_GROUP(x) == 0b000 && get_bits(x, 7, 4) == 0b1001 && !( get_bit(x ,24) && get_bits(x, 6, 5) == 0b00))    
-#define IS_MISC(x) ( GET_COND(x) !=  0b1111 && !( !get_bit(x, 25) &&  get_bit(x, 7) && get_bit(x, 4)) && get_bits(x, 27, 20) == 0b00010000)
+#define IS_MISC(x) ( GET_COND(x) !=  0b1111 && !( !get_bit(x, 25) &&  get_bit(x, 7) && get_bit(x, 4)) && get_bits(x, 27, 26) == 0b00 && get_bits(x, 24, 23) == 0b10 && get_bit(x, 20) == 0b0 )
 
 char *arm_get_exception_name(unsigned char exception);
 char *arm_get_mode_name(uint8_t mode);

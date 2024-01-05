@@ -199,6 +199,9 @@ int arm_load_store(arm_core p, uint32_t ins) {
     uint8_t rd = GET_RD(ins);
     uint8_t rn = GET_RN(ins);
     uint32_t addr;
+	if(rn == 15){
+		return 1; //TODO
+	}
     if(GET_GROUP(ins) == 0b010){
         if(GET_P(ins)){
             if(GET_U(ins))
@@ -221,6 +224,10 @@ int arm_load_store(arm_core p, uint32_t ins) {
         if(GET_GROUP(ins) == 0b011){
             uint8_t rm = GET_RM(ins);
             uint32_t index;
+			if(get_bit(ins, 4))
+				return UNDEFINED_INSTRUCTION;
+			if(rm == 15)
+				return 1; //TODO
             if(!GET_SHIFT_IMM(ins) && !GET_SHIFT(ins)){
                 index = arm_read_register(p, rm);
             }else{

@@ -349,7 +349,7 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 		uint8_t rm = GET_RM(ins);
 		uint32_t v_rs = arm_read_register(p, rs);
 		uint32_t v_rm = arm_read_register(p, rm);
-		// TERMINAISON ANTICIPE
+		//TODO TERMINAISON ANTICIPE
 		uint64_t result = v_rm * v_rs;
 		if(!b23 && !b22){
 			uint8_t rd = GET_RD(ins);
@@ -386,7 +386,7 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 						}
 					}
 				}else{
-					int64_t product = (int64_t)((int32_t)v_rm) * ((int32_t)v_rs);
+					int64_t product = (int64_t)((int32_t)v_rm) * ((int32_t)v_rs); //TODO
 					v_rhi = (uint32_t)(product >> 32) & 0xFFFFFFFF;
 					v_rlo = (uint32_t) product & 0xFFFFFFFF;
 					if(b21){
@@ -445,6 +445,34 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 
 int arm_data_processing_immediate_msr(arm_core p, uint32_t ins) {
 	if(IS_MISC(ins)) {
+		uint32_t operand = get_shift_imm(p, GET_IMM8(ins), GET_ROT_IMM(ins));
+		if(operand & UnallocMask){
+			return 1; //TODO
+		}
+		uint32_t byte_mask =   (get_bit(GET_FIELD_MASK(ins), 0) ? 0x000000FF : 0x00000000)
+							 | (get_bit(GET_FIELD_MASK(ins), 1) ? 0x0000FF00 : 0x00000000)
+							 | (get_bit(GET_FIELD_MASK(ins), 2) ? 0x00FF0000 : 0x00000000)
+							 | (get_bit(GET_FIELD_MASK(ins), 3) ? 0xFF000000 : 0x00000000);
+		uint32_t mask;
+		if(!GET_R(ins)){
+			if(arm_in_a_privileged_mode(p)){
+				if(operand & StateMask)
+					return 1; //TODO
+				else{
+					mask = byte_mask & (UserMask | PrivMask);
+				}
+			}else{
+				mask = byte_mask & UserMask;
+			}
+			arm_write_cpsr(p, (arm_read_cpsr(p) & ~mask) | (operand & mask));
+		}else{
+			if(arm_current_mode_has_spsr(p)){
+				mask = byte_mask & (UserMask | PrivMask | StateMask);
+				arm_write_spsr(p, (arm_read_spsr(p) & ~mask) | (operand & mask));
+			}else{
+				return 1; //TODO
+			}
+		}
 	}else {
 		uint8_t rn = GET_RN(ins);
 		uint8_t rd = GET_RD(ins);
