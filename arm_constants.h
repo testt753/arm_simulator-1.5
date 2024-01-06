@@ -85,6 +85,8 @@ Contact: Guillaume.Huard@imag.fr
 #define GET_SHIFT_IMM(x) get_bits(x, 11, 7)
 #define GET_SHIFT(x) get_bits(x, 6, 5)
 #define GET_IMM8(x) get_bits(x, 7, 0)
+#define GET_IMMH(x) get_bits(x, 11, 8)
+#define GET_IMML(x) get_bits(x, 3, 0)
 #define GET_IMM12(x) get_bits(x, 11, 0)
 #define GET_LINK(x) get_bit(x, 24)
 #define GET_L(x) get_bit(x, 20)

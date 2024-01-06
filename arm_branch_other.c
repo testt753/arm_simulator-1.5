@@ -79,9 +79,9 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
                 if(GET_RD(ins) == 15)
                     return 1; //TODO
                 if(GET_R(ins)){
-                    arm_write_register(p, GET_RD(ins), arm_read_spsr);
+                    arm_write_register(p, GET_RD(ins), arm_read_spsr(p));
                 }else{
-                    arm_write_register(p, GET_RD(ins), arm_read_cpsr);
+                    arm_write_register(p, GET_RD(ins), arm_read_cpsr(p));
                 }
             }
             return 0;
@@ -122,18 +122,19 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
             arm_write_register(p, 15, target & 0xFFFFFFFE);
             return 0;
         case 0b0101:
+            int32_t v_rd;
             if(GET_RD(ins) == 15 || GET_RM(ins) == 15 || GET_RN(ins) == 15)
                 return 1; //TODO
             switch(GET_Q_OP(ins)){
                 case 0b00:
-                    int32_t v_rd = SignedSat(arm_read_register(p, GET_RM(ins)) + arm_read_register(p, GET_RN(ins)), 32);
+                    v_rd = SignedSat(arm_read_register(p, GET_RM(ins)) + arm_read_register(p, GET_RN(ins)), 32);
                     arm_write_register(p, GET_RD(ins), (uint32_t) v_rd);
                     if(SignedDoesSat(v_rd, 32)){
                         arm_write_cpsr(p, set_bit(arm_read_cpsr(p), 27));
                     }
                     return 0;
                 case 0b01:
-                    int32_t v_rd = SignedSat(arm_read_register(p, GET_RM(ins)) - arm_read_register(p, GET_RN(ins)), 32);
+                    v_rd = SignedSat(arm_read_register(p, GET_RM(ins)) - arm_read_register(p, GET_RN(ins)), 32);
                     arm_write_register(p, GET_RD(ins), (uint32_t) v_rd);
                     if(SignedDoesSat(v_rd, 32)){
                         arm_write_cpsr(p, set_bit(arm_read_cpsr(p), 27));
@@ -141,15 +142,15 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
                     return 0;
                 case 0b10:
                     int32_t tmp = SignedSat(arm_read_register(p, GET_RN(ins)) * 2, 32);
-                    int32_t v_rd = SignedSat(arm_read_register(p, GET_RM(ins)) + tmp, 32);
+                    v_rd = SignedSat(arm_read_register(p, GET_RM(ins)) + tmp, 32);
                     arm_write_register(p, GET_RD(ins), (uint32_t) v_rd);
                     if(SignedDoesSat(v_rd, 32) || SignedDoesSat(tmp, 32)){
                         arm_write_cpsr(p, set_bit(arm_read_cpsr(p), 27));
                     }
                     return 0;
                 case 0b11:
-                    int32_t tmp = SignedSat(arm_read_register(p, GET_RN(ins)) * 2, 32);
-                    int32_t v_rd = SignedSat(arm_read_register(p, GET_RM(ins)) - tmp, 32);
+                    tmp = SignedSat(arm_read_register(p, GET_RN(ins)) * 2, 32);
+                    v_rd = SignedSat(arm_read_register(p, GET_RM(ins)) - tmp, 32);
                     arm_write_register(p, GET_RD(ins), (uint32_t) v_rd);
                     if(SignedDoesSat(v_rd, 32) || SignedDoesSat(tmp, 32)){
                         arm_write_cpsr(p, set_bit(arm_read_cpsr(p), 27));
@@ -160,8 +161,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
             }
         case 0b0111:
             if(GET_COND(ins) != 0b1110)
-                return 1; //TODO
-            //BKPT
+                return PREFETCH_ABORT;
         case 0b1000:
         case 0b1010:
         case 0b1100:
@@ -169,7 +169,6 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
             if(GET_RD(ins) == 15 || GET_RM(ins) == 15 || GET_RN(ins) == 15)
                 return 1; //TODO
             int32_t operand1, operand2;
-            int32_t v_rd;
             switch(GET_MISC_MUL_OP(ins)){
                 case 0b00:            
                     // Signe-étend selon les valeurs de x et y
@@ -182,22 +181,22 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
                     if (OverflowFrom(operand1 * operand2, (int32_t) arm_read_register(p, GET_RN(ins)), v_rd, 0)) {
                         arm_write_cpsr(p, set_bit(arm_read_cpsr(p), 27));
                     } else {
-                        arm_write_cpsr(p, clear_bit(arm_read_cpsr(p), 27));
+                        arm_write_cpsr(p, clr_bit(arm_read_cpsr(p), 27));
                     }
                     return 0;
                 case 0b01:
                     operand2 = GET_Y(ins) ? (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins)) >> 16)) : (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins))));
                     if(GET_X(ins)){
-                        int64_t tmp = operand2 * arm_read_register(p, GET_RM(ins));
-                        arm_write_register(p, GET_RD(ins), get_bits(tmp, 47, 16));
+                        int64_t tmp1 = operand2 * arm_read_register(p, GET_RM(ins));
+                        arm_write_register(p, GET_RD(ins), (uint32_t)(tmp1 >> 16));
                     }else{
-                        int64_t tmp = operand2 * arm_read_register(p, GET_RM(ins));
-                        v_rd = (int32_t)get_bits(tmp, 47, 16) + arm_read_register(p, GET_RN(ins));
+                        int64_t tmp1 = operand2 * arm_read_register(p, GET_RM(ins));
+                        v_rd = (int32_t)(tmp1 >> 16) + arm_read_register(p, GET_RN(ins));
                         arm_write_register(p, GET_RD(ins), v_rd);
-                        if (OverflowFrom(tmp, arm_read_register(p, GET_RN(ins)), v_rd, 0)) {
+                        if (OverflowFrom(tmp1, arm_read_register(p, GET_RN(ins)), v_rd, 0)) {
                             arm_write_cpsr(p, set_bit(arm_read_cpsr(p), 27));
                         } else {
-                            arm_write_cpsr(p, clear_bit(arm_read_cpsr(p), 27));
+                            arm_write_cpsr(p, clr_bit(arm_read_cpsr(p), 27));
                         }
                     }
                 case 0b10:

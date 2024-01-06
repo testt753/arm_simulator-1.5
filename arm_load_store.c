@@ -199,10 +199,11 @@ int arm_load_store(arm_core p, uint32_t ins) {
     uint8_t rd = GET_RD(ins);
     uint8_t rn = GET_RN(ins);
     uint32_t addr;
-	if(rn == 15){
-		return 1; //TODO
-	}
+	
     if(GET_GROUP(ins) == 0b010){
+		if(rn == 15){
+			return 1; //TODO
+		}
         if(GET_P(ins)){
             if(GET_U(ins))
                 addr = GET_IMM12(ins) + arm_read_register(p, rn);
@@ -222,12 +223,13 @@ int arm_load_store(arm_core p, uint32_t ins) {
         }
     }else{
         if(GET_GROUP(ins) == 0b011){
+			if(rn == 15){
+				return 1; //TODO
+			}
             uint8_t rm = GET_RM(ins);
             uint32_t index;
 			if(get_bit(ins, 4))
 				return UNDEFINED_INSTRUCTION;
-			if(rm == 15)
-				return 1; //TODO
             if(!GET_SHIFT_IMM(ins) && !GET_SHIFT(ins)){
                 index = arm_read_register(p, rm);
             }else{
@@ -240,29 +242,161 @@ int arm_load_store(arm_core p, uint32_t ins) {
             if(GET_W(ins)){
                 arm_write_register(p, rn, addr);
             }
-        }
+        }else{
+			if(GET_GROUP(ins) == 0b000){
+				if(GET_P(ins)){
+					if(get_bit(ins, 22)){
+						uint8_t offset_8 = (GET_IMMH(ins) << 4) | GET_IMML(ins);
+						if(GET_U(ins))
+							addr = arm_read_register(p, rn) + offset_8;
+						else
+							addr = arm_read_register(p, rn) - offset_8;
+					}else{
+						if(GET_RM(ins) == 15){
+							return 1; //TODO
+						}
+						if(GET_U(ins))
+							addr = arm_read_register(p, rn) + arm_read_register(p, GET_RM(ins));
+						else
+							addr = arm_read_register(p, rn) - arm_read_register(p, GET_RM(ins));
+					}
+
+					if(GET_W(ins)){
+						arm_write_register(p, rn, addr);
+					}
+				}else{
+					if(GET_W(ins))
+						return 1; //TODO
+					if(get_bit(ins, 22)){
+						uint8_t offset_8 = (GET_IMMH(ins) << 4) | GET_IMML(ins);
+						if(GET_U(ins))
+							addr = arm_read_register(p, rn) + offset_8;
+						else
+							addr = arm_read_register(p, rn) - offset_8;
+					}else{
+						if(GET_RM(ins) == 15){
+							return 1; //TODO
+						}
+						if(GET_U(ins))
+							addr = arm_read_register(p, rn) + arm_read_register(p, GET_RM(ins));
+						else
+							addr = arm_read_register(p, rn) - arm_read_register(p, GET_RM(ins));
+					}
+				}
+
+				switch(GET_MISC(ins)){
+					case 0b1001:
+						if(GET_RM(ins) == 15 || GET_RN(ins) == 15 || GET_RD(ins) == 15 || GET_RM(ins) == GET_RN(ins) || GET_RN(ins) == GET_RD(ins))
+							return 1; //TODO
+						uint32_t temp;
+						if(!GET_B(ins)){
+							arm_read_word(p, addr, &temp);
+							if (addr % 4 != 0) {
+								/*
+								// Adresse non alignée
+								int rotate_amount = 8 * (addr % 4);
+								temp = (temp >> rotate_amount) | (temp << (32 - rotate_amount));
+								*/
+								return DATA_ABORT;
+							}
+							arm_write_word(p, addr, arm_read_register(p, GET_RM(ins)));
+							arm_write_register(p, GET_RD(ins), temp);
+						}else{
+							arm_read_byte(p ,addr, &temp);
+							arm_write_byte(p, addr, arm_read_register(p, GET_RM(ins)));
+							arm_write_register(p, rd, (uint8_t)temp);
+						}
+						return 0;
+					case 0b1011:
+						if(!GET_L(ins)){
+							if(!get_bit(addr, 0)){
+								arm_write_half(p, addr, arm_read_register(p, GET_RD(ins)));
+							}else
+								return 1; //TODO
+						}else{
+							if(!get_bit(addr, 0)){
+								arm_read_half(p, addr, &temp);
+							}else
+								return 1; //TODO
+							arm_write_register(p, GET_RD(ins), temp);
+						}
+					case 0b1101:
+					case 0b1110:
+					case 0b1111:
+						if(GET_L(ins)){
+							if(!get_bit(ins, 5)){
+								int8_t data;
+								arm_read_byte(p, addr, &data);
+								arm_write_register(p, GET_RD(ins), (int32_t)data);
+							}else{
+								int16_t data;
+								if (get_bit(addr, 0) != 0) {
+									if(!get_bit(addr, 0)){
+										arm_read_half(p, addr, &data);
+									}else
+										return 1; //TODO
+								}else{
+									arm_read_half(p, addr, &data);
+								}
+								arm_write_register(p, GET_RD(ins), (int32_t)data);
+							}
+						}else{
+							if(!get_bit(ins, 5)){
+								if(GET_RD(ins) != 14 && !get_bit(arm_read_register(p, GET_RD(ins)),0) && (!(addr % 4) || !get_bit(addr, 2))){
+									uint32_t tmp;
+									arm_read_word(p, addr, &tmp);
+									arm_write_register(p, GET_RD(ins), tmp);
+									arm_read_word(p, addr + 4, &tmp);
+									arm_write_register(p, GET_RD(ins) + 1, tmp);
+								}else{
+									if(!(addr % 4)){
+										return DATA_ABORT;
+									}else{
+										return 1; //TODO
+									}
+								}
+							}else{
+								if(GET_RD(ins) != 14 && !get_bit(arm_read_register(p, GET_RD(ins)),0) && (!(addr % 4) || !get_bit(addr, 2))){
+									uint32_t tmp;
+									arm_write_word(p, addr, arm_read_register(p, GET_RD(ins)));
+									arm_write_word(p, addr + 4, arm_read_register(p, GET_RD(ins) + 1));
+								}else{
+									if(!(addr % 4)){
+										return DATA_ABORT;
+									}else{
+										return 1; //TODO
+									}
+								}
+							}
+						}
+					default:
+						return UNDEFINED_INSTRUCTION;
+				}
+				return 0;
+			}
+		}
     }
     if(GET_L(ins)){
         uint32_t data; 
         if(!GET_B(ins)){
             arm_read_word(p, addr, &data);
 
-        // Vérifier l'alignement de l'adresse
-        if (addr % 4 != 0) {
-            // Adresse non alignée
-            int rotate_amount = 8 * (addr % 4);
-            data = (data >> rotate_amount) | (data << (32 - rotate_amount));
-        }
+			// Vérifier l'alignement de l'adresse
+			if (addr % 4 != 0) {
+				// Adresse non alignée
+				int rotate_amount = 8 * (addr % 4);
+				data = (data >> rotate_amount) | (data << (32 - rotate_amount));
+			}
 
-        if (rd == 15) {
-            arm_write_register(p, 15, data&= 0xFFFFFFFE);
-            if(data & 0x1)
-                arm_write_cpsr(p, set_bit(arm_read_cpsr(p), 5));
-            else
-                arm_write_cpsr(p, clr_bit(arm_read_cpsr(p), 5));
-        } else{
-            arm_write_register(p, rd, data);
-        }
+			if (rd == 15) {
+				arm_write_register(p, 15, data &= 0xFFFFFFFE);
+				if(data & 0x1)
+					arm_write_cpsr(p, set_bit(arm_read_cpsr(p), 5));
+				else
+					arm_write_cpsr(p, clr_bit(arm_read_cpsr(p), 5));
+			} else{
+				arm_write_register(p, rd, data);
+			}
         }else{
             uint8_t tmp = 0;
             arm_read_byte(p ,addr, &tmp);
@@ -274,6 +408,9 @@ int arm_load_store(arm_core p, uint32_t ins) {
         if(GET_B(ins)){
             arm_write_byte(p, addr, get_bits(arm_read_register(p, rd), 7, 0));
         }else{
+			if (addr % 4 != 0) {
+				return DATA_ABORT;
+			}
             arm_write_word(p, addr, arm_read_register(p, rd));
         }
         return 0;
