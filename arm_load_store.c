@@ -288,8 +288,9 @@ int arm_load_store(arm_core p, uint32_t ins) {
 					case 0b1001:
 						if(GET_RM(ins) == 15 || GET_RN(ins) == 15 || GET_RD(ins) == 15 || GET_RM(ins) == GET_RN(ins) || GET_RN(ins) == GET_RD(ins))
 							return 1; //TODO
-						uint32_t temp;
+						
 						if(!GET_B(ins)){
+							uint32_t temp;
 							arm_read_word(p, addr, &temp);
 							if (addr % 4 != 0) {
 								/*
@@ -302,12 +303,14 @@ int arm_load_store(arm_core p, uint32_t ins) {
 							arm_write_word(p, addr, arm_read_register(p, GET_RM(ins)));
 							arm_write_register(p, GET_RD(ins), temp);
 						}else{
+							uint8_t temp;
 							arm_read_byte(p ,addr, &temp);
 							arm_write_byte(p, addr, arm_read_register(p, GET_RM(ins)));
 							arm_write_register(p, rd, (uint8_t)temp);
 						}
 						return 0;
 					case 0b1011:
+						uint16_t temp;
 						if(!GET_L(ins)){
 							if(!get_bit(addr, 0)){
 								arm_write_half(p, addr, arm_read_register(p, GET_RD(ins)));
