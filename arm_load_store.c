@@ -555,7 +555,8 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 					}
 				}
 				//assert end_address == address - 4
-				verify_address(addr,addr_end);	
+				if(verify_address(addr,addr_end))
+					return 1; //TODO
 			}
 			//LDM(3)
 			else{
@@ -572,7 +573,8 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 				arm_read_word(p,addr,&value);
 				arm_write_register(p,15,value);
 				addr=addr+4;
-				verify_address(addr,addr_end);
+				if(verify_address(addr,addr_end))
+					return 1; //TODO
 			}
 		}
 		//LDM(1)
@@ -586,7 +588,8 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 				get_bit(value, 0) ? arm_write_cpsr(p, set_bit(5, arm_read_cpsr(p))) : arm_write_cpsr(p, clr_bit(5, arm_read_cpsr(p)));
 				addr=addr+4;
 			}
-			verify_address(addr,addr_end);
+			if(verify_address(addr,addr_end))
+				return 1; //TODO
 		}
 		return 0;
 	}
@@ -594,7 +597,8 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 		if(!GET_B(ins)){				//STM1
 			if(manipule_regs( p, ins, addr, 0))
 				return 1; //TODO
-			verify_address(addr,addr_end);
+			if(verify_address(addr,addr_end))
+				return 1; //TODO
 		}
 		else{						//STM2
 			if(GET_W(ins))
