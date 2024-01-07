@@ -56,7 +56,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
             if(get_bit(ins, 21)){
                 uint32_t operand = arm_read_register(p, GET_RM(ins));
                 if(operand & UnallocMask){
-                    return 1; //TODO
+                    fprintf(stderr, "UNPREDICTABLE");
                 }
                 uint32_t byte_mask =   (get_bit(GET_FIELD_MASK(ins), 0) ? 0x000000FF : 0x00000000)
                                     | (get_bit(GET_FIELD_MASK(ins), 1) ? 0x0000FF00 : 0x00000000)
@@ -66,7 +66,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
                 if(!GET_R(ins)){
                     if(arm_in_a_privileged_mode(p)){
                         if(operand & StateMask)
-                            return 1; //TODO
+                            fprintf(stderr, "UNPREDICTABLE");
                         else{
                             mask = byte_mask & (UserMask | PrivMask);
                         }
@@ -77,7 +77,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
                 }
             }else{
                 if(GET_RD(ins) == 15)
-                    return 1; //TODO
+                    fprintf(stderr, "UNPREDICTABLE");
                 if(GET_R(ins)){
                     arm_write_register(p, GET_RD(ins), arm_read_spsr(p));
                 }else{
@@ -88,7 +88,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
         case 0b0001:
             if(get_bit(ins, 22)){
                 if(GET_RD(ins) == 15 || GET_RM(ins) == 15)
-                    return 1; //TODO
+                    fprintf(stderr, "UNPREDICTABLE");
                 if(!arm_read_register(p, GET_RM(ins))){
                     arm_write_register(p, GET_RD(ins), 32);
                 }else{
@@ -99,7 +99,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
             }else{
                 uint32_t v_rm = arm_read_register(p, GET_RM(ins));
                 if(get_bits(v_rm, 1, 0) == 0b10)
-                    return 1; //TODO
+                    fprintf(stderr, "UNPREDICTABLE");
                 if(get_bit(v_rm, 0))
                     arm_write_cpsr(p, set_bit(arm_read_cpsr(p), 5));
                 else
@@ -111,7 +111,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
         case 0b0011:
             uint32_t target = arm_read_register(p, GET_RM(ins));
             if(get_bits(target, 1, 0) == 0b10)
-                return 1; //TODO
+                fprintf(stderr, "UNPREDICTABLE");
             
             arm_write_register(p, 14, arm_read_register(p, 15) - 4);
             if(get_bit(target, 0))
@@ -124,7 +124,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
         case 0b0101:
             int32_t v_rd;
             if(GET_RD(ins) == 15 || GET_RM(ins) == 15 || GET_RN(ins) == 15)
-                return 1; //TODO
+                fprintf(stderr, "UNPREDICTABLE");
             switch(GET_Q_OP(ins)){
                 case 0b00:
                     v_rd = SignedSat(arm_read_register(p, GET_RM(ins)) + arm_read_register(p, GET_RN(ins)), 32);
@@ -167,7 +167,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
         case 0b1100:
         case 0b1110:
             if(GET_RD(ins) == 15 || GET_RM(ins) == 15 || GET_RN(ins) == 15)
-                return 1; //TODO
+                fprintf(stderr, "UNPREDICTABLE");
             int32_t operand1, operand2;
             switch(GET_MISC_MUL_OP(ins)){
                 case 0b00:            

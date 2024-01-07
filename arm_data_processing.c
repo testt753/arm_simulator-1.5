@@ -447,7 +447,7 @@ int arm_data_processing_immediate_msr(arm_core p, uint32_t ins) {
 	if(IS_MISC(ins)) {
 		uint32_t operand = get_shift_imm(p, GET_IMM8(ins), GET_ROT_IMM(ins));
 		if(operand & UnallocMask){
-			return 1; //TODO
+			fprintf(stderr, "UNPREDICTABLE");
 		}
 		uint32_t byte_mask =   (get_bit(GET_FIELD_MASK(ins), 0) ? 0x000000FF : 0x00000000)
 							 | (get_bit(GET_FIELD_MASK(ins), 1) ? 0x0000FF00 : 0x00000000)
@@ -457,7 +457,7 @@ int arm_data_processing_immediate_msr(arm_core p, uint32_t ins) {
 		if(!GET_R(ins)){
 			if(arm_in_a_privileged_mode(p)){
 				if(operand & StateMask)
-					return 1; //TODO
+					fprintf(stderr, "UNPREDICTABLE");
 				else{
 					mask = byte_mask & (UserMask | PrivMask);
 				}
@@ -470,7 +470,7 @@ int arm_data_processing_immediate_msr(arm_core p, uint32_t ins) {
 				mask = byte_mask & (UserMask | PrivMask | StateMask);
 				arm_write_spsr(p, (arm_read_spsr(p) & ~mask) | (operand & mask));
 			}else{
-				return 1; //TODO
+				fprintf(stderr, "UNPREDICTABLE");
 			}
 		}
 	}else {

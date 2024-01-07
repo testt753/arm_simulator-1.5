@@ -202,7 +202,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 	
     if(GET_GROUP(ins) == 0b010){
 		if(rn == 15){
-			return 1; //TODO
+			fprintf(stderr, "UNPREDICTABLE");
 		}
         if(GET_P(ins)){
             if(GET_U(ins))
@@ -225,7 +225,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
         if(GET_GROUP(ins) == 0b011){
             uint8_t rm = GET_RM(ins);\
 			if(rm == 15){
-				return 1; //TODO
+				fprintf(stderr, "UNPREDICTABLE");
 			}
             uint32_t index;
 			if(GET_P(ins)){
@@ -242,13 +242,13 @@ int arm_load_store(arm_core p, uint32_t ins) {
 					addr = arm_read_register(p, rn) - index;
 				if(GET_W(ins)){
 					if(rn == 15){
-						return 1; //TODO
+						fprintf(stderr, "UNPREDICTABLE");
 					}
 					arm_write_register(p, rn, addr);
 				}
 			}else{
 				if(GET_W(ins) || rn == 15)
-					return 1; //TODO
+					fprintf(stderr, "UNPREDICTABLE");
 				if(get_bit(ins, 4))
 					return UNDEFINED_INSTRUCTION;
 				if(!GET_SHIFT_IMM(ins) && !GET_SHIFT(ins)){
@@ -275,12 +275,12 @@ int arm_load_store(arm_core p, uint32_t ins) {
 
 						if(GET_W(ins)){
 							if(GET_RN(ins) == 15)
-								return 1; //TODO
+								fprintf(stderr, "UNPREDICTABLE");
 							arm_write_register(p, rn, addr);
 						}
 					}else{
 						if(GET_RM(ins) == 15){
-							return 1; //TODO
+							fprintf(stderr, "UNPREDICTABLE");
 						}
 						if(GET_U(ins))
 							addr = arm_read_register(p, rn) + arm_read_register(p, GET_RM(ins));
@@ -288,17 +288,17 @@ int arm_load_store(arm_core p, uint32_t ins) {
 							addr = arm_read_register(p, rn) - arm_read_register(p, GET_RM(ins));
 						if(GET_W(ins)){
 							if(GET_RN(ins) == 15 || GET_RN(ins) == GET_RM(ins))
-								return 1; //TODO
+								fprintf(stderr, "UNPREDICTABLE");
 							arm_write_register(p, rn, addr);
 						}
 					}
 
 				}else{
 					if(GET_W(ins))
-						return 1; //TODO
+						fprintf(stderr, "UNPREDICTABLE");
 					if(get_bit(ins, 22)){
 						if(GET_RN(ins) == 15){
-							return 1; //TODO
+							fprintf(stderr, "UNPREDICTABLE");
 						}
 						uint8_t offset_8 = (GET_IMMH(ins) << 4) | GET_IMML(ins);
 						if(GET_U(ins))
@@ -307,7 +307,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 							addr = arm_read_register(p, rn) - offset_8;
 					}else{
 						if(GET_RN(ins) == 15 || GET_RM(ins) == 15 || GET_RM(ins) == GET_RM(ins)){
-							return 1; //TODO
+							fprintf(stderr, "UNPREDICTABLE");
 						}
 						if(GET_U(ins))
 							addr = arm_read_register(p, rn) + arm_read_register(p, GET_RM(ins));
@@ -319,7 +319,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 				switch(GET_MISC(ins)){
 					case 0b1001:
 						if(GET_RM(ins) == 15 || GET_RN(ins) == 15 || GET_RD(ins) == 15 || GET_RM(ins) == GET_RN(ins) || GET_RN(ins) == GET_RD(ins))
-							return 1; //TODO
+							fprintf(stderr, "UNPREDICTABLE");
 						
 						if(!GET_B(ins)){
 							uint32_t temp;
@@ -369,7 +369,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 								if(!get_bit(addr, 0)){
 									arm_read_half(p, addr, &data);
 								}else
-									return 1; //TODO
+									fprintf(stderr, "UNPREDICTABLE");
 								
 								arm_write_register(p, GET_RD(ins), (int32_t)data);
 							}
@@ -385,7 +385,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 									if(!(addr % 4)){
 										return DATA_ABORT;
 									}else{
-										return 1; //TODO
+										fprintf(stderr, "UNPREDICTABLE");
 									}
 								}
 							}else{
@@ -396,7 +396,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 									if(!(addr % 4)){
 										return DATA_ABORT;
 									}else{
-										return 1; //TODO
+										fprintf(stderr, "UNPREDICTABLE");
 									}
 								}
 							}
@@ -458,7 +458,7 @@ int manipule_regs(arm_core p, uint32_t ins, uint32_t addr, int cas){
 	if(cas==1){					//load case
 		for(int i=0;i<15;i++){
 			if(rn == i && GET_W(ins))
-				return 1; //TODO
+				fprintf(stderr, "UNPREDICTABLE");
 			if (get_bit(ins,i)){
 				arm_read_word(p,addr,&data_ri);
 				arm_write_register(p, i, data_ri);
@@ -472,7 +472,7 @@ int manipule_regs(arm_core p, uint32_t ins, uint32_t addr, int cas){
 		for(int i=0;i<15;i++){
 			if (get_bit(ins,i)){
 				if(b && i == rn)
-					return 1; //TODO
+					fprintf(stderr, "UNPREDICTABLE");
 				b = 1;
 				data_ri=arm_read_register(p,i);
 				arm_write_word(p,addr,data_ri);
@@ -499,7 +499,7 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 	}
 
 	if(!reg_select)
-		return 1; //TODO
+		fprintf(stderr, "UNPREDICTABLE");
 //definition des adresses start et end 
 
 	//si on incremente apres p=0 & u=1
@@ -542,7 +542,7 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 	if(!(addr % 4))
 		return DATA_ABORT;
 	if((GET_B(ins) && !arm_current_mode_has_spsr(p)) || GET_RN(ins) == 15)
-		return 1; //TODO
+		fprintf(stderr, "UNPREDICTABLE");
     if(GET_L(ins)){					//load case
 		if(GET_B(ins)){						// si bit B=1
 			//LDM(2)
@@ -556,17 +556,17 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 				}
 				//assert end_address == address - 4
 				if(verify_address(addr,addr_end))
-					return 1; //TODO
+					fprintf(stderr, "UNPREDICTABLE");
 			}
 			//LDM(3)
 			else{
 				if(manipule_regs( p, ins, addr, 1))
-					return 1; //TODO
+					fprintf(stderr, "UNPREDICTABLE");
 				// if current mode has spsr
 				if (arm_current_mode_has_spsr(p)){
 					arm_write_cpsr(p,arm_read_spsr(p));
 				}else{
-					return 1; //TODO
+					fprintf(stderr, "UNPREDICTABLE");
 				}
 
 				uint32_t value;
@@ -574,13 +574,13 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 				arm_write_register(p,15,value);
 				addr=addr+4;
 				if(verify_address(addr,addr_end))
-					return 1; //TODO
+					fprintf(stderr, "UNPREDICTABLE");
 			}
 		}
 		//LDM(1)
 		else{
 			if(manipule_regs( p, ins, addr, 1))
-				return 1; //TODO
+				fprintf(stderr, "UNPREDICTABLE");
 			if (get_bit(ins,15)){
 				uint32_t value;
 				arm_read_word(p,addr,&value);
@@ -589,25 +589,25 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 				addr=addr+4;
 			}
 			if(verify_address(addr,addr_end))
-				return 1; //TODO
+				fprintf(stderr, "UNPREDICTABLE");
 		}
 		return 0;
 	}
 	else{								//store case
 		if(!GET_B(ins)){				//STM1
 			if(manipule_regs( p, ins, addr, 0))
-				return 1; //TODO
+				fprintf(stderr, "UNPREDICTABLE");
 			if(verify_address(addr,addr_end))
-				return 1; //TODO
+				fprintf(stderr, "UNPREDICTABLE");
 		}
 		else{						//STM2
 			if(GET_W(ins))
-				return 1; //TODO
+				fprintf(stderr, "UNPREDICTABLE");
 			int b = 0;
 			for(int i=0;i<16;i++){
 				if (get_bit(ins,i)){
 					if(b && i == rn)
-						return 1; //TODO
+						fprintf(stderr, "UNPREDICTABLE");
 					b = 1;
 					data_ri=arm_read_usr_register(p,i);
 					arm_write_word(p,addr,data_ri);
