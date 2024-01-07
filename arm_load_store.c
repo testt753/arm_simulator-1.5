@@ -347,12 +347,12 @@ int arm_load_store(arm_core p, uint32_t ins) {
 							if(!get_bit(addr, 0)){
 								arm_write_half(p, addr, arm_read_register(p, GET_RD(ins)));
 							}else
-								return 1; //TODO
+								return DATA_ABORT; //TODO
 						}else{
 							if(!get_bit(addr, 0)){
 								arm_read_half(p, addr, &temp);
 							}else
-								return 1; //TODO
+								return DATA_ABORT; //TODO
 							arm_write_register(p, GET_RD(ins), temp);
 						}
 					case 0b1101:
@@ -450,7 +450,169 @@ int arm_load_store(arm_core p, uint32_t ins) {
     return UNDEFINED_INSTRUCTION;
 }
 
+// fonction qui execute les affectations depuis les registres 
+// dans LDM1,LDM3 et STM1  
+int manipule_regs(arm_core p, uint32_t ins, uint32_t addr, int cas){ 
+	uint32_t data_ri;
+	uint8_t rn = GET_RN(ins);
+	if(cas==1){					//load case
+		for(int i=0;i<15;i++){
+			if(rn == i && GET_W(ins))
+				return 1; //TODO
+			if (get_bit(ins,i)){
+				arm_read_word(p,addr,&data_ri);
+				arm_write_register(p, i, data_ri);
+				addr=addr+4;
+			}
+		}
+		return 0;
+	}
+	else{						//store case
+		int b = 0;
+		for(int i=0;i<15;i++){
+			if (get_bit(ins,i)){
+				if(b && i == rn)
+					return 1; //TODO
+				b = 1;
+				data_ri=arm_read_register(p,i);
+				arm_write_word(p,addr,data_ri);
+				addr=addr+4;
+			}
+		}
+		return 0;
+	}	
+}
+
+
 int arm_load_store_multiple(arm_core p, uint32_t ins) {
+    uint8_t rn = GET_RN(ins);
+	uint32_t v_rn = arm_read_register(p,rn);
+	uint8_t reg_select=0;
+	uint32_t data_ri;
+	uint32_t addr;
+    uint32_t addr_start,addr_end;
+	//calcul du nombre de registre à 1 dans l'instruction
+	for(int i=0;i<16;i++){
+		if (get_bit(ins,i)){
+			reg_select++;
+		}
+	}
+
+	if(!reg_select)
+		return 1; //TODO
+//definition des adresses start et end 
+
+	//si on incremente apres p=0 & u=1
+	if (!GET_P(ins) && GET_U(ins)){
+		addr_start=v_rn;
+		addr_end=v_rn+((reg_select*4)-4);
+		if (GET_W(ins)){
+			arm_write_register(p, rn, v_rn+(reg_select*4));
+		}
+	}
+
+	//si on incremente avant p=1 & u=1
+	else if (GET_P(ins) && GET_U(ins)){
+		addr_start=v_rn+4;
+		addr_end=v_rn+(reg_select*4);
+		if (GET_W(ins)){
+			arm_write_register(p, rn, v_rn+(reg_select*4));
+		}
+	}
+
+	//si on decremente apres p=0 & u=0
+	else if (!GET_P(ins) && !GET_U(ins)){
+		addr_start=v_rn-((reg_select*4)+4);
+		addr_end=v_rn;
+		if (GET_W(ins)){
+			arm_write_register(p, rn, v_rn-(reg_select*4));
+		}
+	}
+
+	//si on decremente avant p=1 & u=0
+	else if (GET_P(ins) && !GET_U(ins)){
+		addr_start=v_rn-(reg_select*4);
+		addr_end=v_rn-4;
+		if (GET_W(ins)){
+			arm_write_register(p, rn, v_rn-(reg_select*4));
+		}
+	}
+	addr= addr_start;
+
+	if(!(addr % 4))
+		return DATA_ABORT;
+	if(GET_B(ins) && !arm_current_mode_has_spsr(p) || GET_RN(ins) == 15)
+		return 1; //TODO
+    if(GET_L(ins)){					//load case
+		if(GET_B(ins)){						// si bit B=1
+			//LDM(2)
+			if(!get_bit(ins,15)){			// si pc=0
+				for(int i=0;i<15;i++){
+					if (get_bit(ins,i)){
+						arm_read_word(p,addr,&data_ri);
+						arm_write_usr_register(p,i,data_ri);
+						addr=addr+4;
+					}
+				}
+				//assert end_address == address - 4
+				verify_address(addr,addr_end);	
+			}
+			//LDM(3)
+			else{
+				if(manipule_regs( p, ins, addr, 1))
+					return 1; //TODO
+				// if current mode has spsr
+				if (arm_current_mode_has_spsr(p)){
+					arm_write_cpsr(p,arm_read_spsr(p));
+				}else{
+					return 1; //TODO
+				}
+
+				uint32_t value;
+				arm_read_word(p,addr,&value);
+				arm_write_register(p,15,value);
+				addr=addr+4;
+				verify_address(addr,addr_end);
+			}
+		}
+		//LDM(1)
+		else{
+			if(manipule_regs( p, ins, addr, 1))
+				return 1; //TODO
+			if (get_bit(ins,15)){
+				uint32_t value;
+				arm_read_word(p,addr,&value);
+				arm_write_register(p,15,value&=0xFFFFFFFE);
+				get_bit(value, 0) ? arm_write_cpsr(p, set_bit(5, arm_read_cpsr(p))) : arm_write_cpsr(p, clr_bit(5, arm_read_cpsr(p)));
+				addr=addr+4;
+			}
+			verify_address(addr,addr_end);
+		}
+		return 0;
+	}
+	else{								//store case
+		if(!GET_B(ins)){				//STM1
+			if(manipule_regs( p, ins, addr, 0))
+				return 1; //TODO
+			verify_address(addr,addr_end);
+		}
+		else{						//STM2
+			if(GET_W(ins))
+				return 1; //TODO
+			int b = 0;
+			for(int i=0;i<16;i++){
+				if (get_bit(ins,i)){
+					if(b && i == rn)
+						return 1; //TODO
+					b = 1;
+					data_ri=arm_read_usr_register(p,i);
+					arm_write_word(p,addr,data_ri);
+					addr=addr+4;
+				}
+			}
+		}
+		return 0;
+	}
     return UNDEFINED_INSTRUCTION;
 }
 

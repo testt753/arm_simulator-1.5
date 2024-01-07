@@ -95,3 +95,11 @@ int32_t SignedSat(int32_t x, int32_t n) {
     return x;
   }
 }
+
+// lequivalent de assert (à enlever car on peut utiliser assert directement 
+void verify_address(uint32_t addr,uint32_t addr_end){
+    if (addr_end!=addr-4){
+		printf("Erreur: Dans load_store_multiple end_addresse != adresse-4\n");
+        exit(0);
+	}
+}
