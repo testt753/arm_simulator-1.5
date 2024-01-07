@@ -382,7 +382,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 									arm_read_word(p, addr + 4, &tmp);
 									arm_write_register(p, GET_RD(ins) + 1, tmp);
 								}else{
-									if(!(addr % 4)){
+									if((addr % 4)){
 										return DATA_ABORT;
 									}else{
 										fprintf(stderr, "UNPREDICTABLE");
@@ -393,7 +393,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 									arm_write_word(p, addr, arm_read_register(p, GET_RD(ins)));
 									arm_write_word(p, addr + 4, arm_read_register(p, GET_RD(ins) + 1));
 								}else{
-									if(!(addr % 4)){
+									if((addr % 4)){
 										return DATA_ABORT;
 									}else{
 										fprintf(stderr, "UNPREDICTABLE");
@@ -539,7 +539,7 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 	}
 	addr= addr_start;
 
-	if(!(addr % 4))
+	if((addr % 4))
 		return DATA_ABORT;
 	if((GET_B(ins) && !arm_current_mode_has_spsr(p)) || GET_RN(ins) == 15)
 		fprintf(stderr, "UNPREDICTABLE");
