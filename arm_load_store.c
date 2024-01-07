@@ -223,25 +223,46 @@ int arm_load_store(arm_core p, uint32_t ins) {
         }
     }else{
         if(GET_GROUP(ins) == 0b011){
-			if(rn == 15){
+            uint8_t rm = GET_RM(ins);\
+			if(rm == 15){
 				return 1; //TODO
 			}
-            uint8_t rm = GET_RM(ins);
             uint32_t index;
-			if(get_bit(ins, 4))
-				return UNDEFINED_INSTRUCTION;
-            if(!GET_SHIFT_IMM(ins) && !GET_SHIFT(ins)){
-                index = arm_read_register(p, rm);
-            }else{
-                index = get_shift_ls(p, ins, 0, 0);
-            }
-            if(GET_U(ins))
-                addr = arm_read_register(p, rn) + index;
-            else
-                addr = arm_read_register(p, rn) - index;
-            if(GET_W(ins)){
-                arm_write_register(p, rn, addr);
-            }
+			if(GET_P(ins)){
+				if(get_bit(ins, 4))
+					return UNDEFINED_INSTRUCTION;
+				if(!GET_SHIFT_IMM(ins) && !GET_SHIFT(ins)){
+					index = arm_read_register(p, rm);
+				}else{
+					index = get_shift_ls(p, ins, 0, 0);
+				}
+				if(GET_U(ins))
+					addr = arm_read_register(p, rn) + index;
+				else
+					addr = arm_read_register(p, rn) - index;
+				if(GET_W(ins)){
+					if(rn == 15){
+						return 1; //TODO
+					}
+					arm_write_register(p, rn, addr);
+				}
+			}else{
+				if(GET_W(ins) || rn == 15)
+					return 1; //TODO
+				if(get_bit(ins, 4))
+					return UNDEFINED_INSTRUCTION;
+				if(!GET_SHIFT_IMM(ins) && !GET_SHIFT(ins)){
+					index = arm_read_register(p, rm);
+				}else{
+					index = get_shift_ls(p, ins, 0, 0);
+				}
+				if(GET_U(ins))
+					addr = arm_read_register(p, rn) + index;
+				else
+					addr = arm_read_register(p, rn) - index;
+
+				arm_write_register(p, rn, addr);
+			}
         }else{
 			if(GET_GROUP(ins) == 0b000){
 				if(GET_P(ins)){
@@ -251,6 +272,12 @@ int arm_load_store(arm_core p, uint32_t ins) {
 							addr = arm_read_register(p, rn) + offset_8;
 						else
 							addr = arm_read_register(p, rn) - offset_8;
+
+						if(GET_W(ins)){
+							if(GET_RN(ins) == 15)
+								return 1; //TODO
+							arm_write_register(p, rn, addr);
+						}
 					}else{
 						if(GET_RM(ins) == 15){
 							return 1; //TODO
@@ -259,22 +286,27 @@ int arm_load_store(arm_core p, uint32_t ins) {
 							addr = arm_read_register(p, rn) + arm_read_register(p, GET_RM(ins));
 						else
 							addr = arm_read_register(p, rn) - arm_read_register(p, GET_RM(ins));
+						if(GET_W(ins)){
+							if(GET_RN(ins) == 15 || GET_RN(ins) == GET_RM(ins))
+								return 1; //TODO
+							arm_write_register(p, rn, addr);
+						}
 					}
 
-					if(GET_W(ins)){
-						arm_write_register(p, rn, addr);
-					}
 				}else{
 					if(GET_W(ins))
 						return 1; //TODO
 					if(get_bit(ins, 22)){
+						if(GET_RN(ins) == 15){
+							return 1; //TODO
+						}
 						uint8_t offset_8 = (GET_IMMH(ins) << 4) | GET_IMML(ins);
 						if(GET_U(ins))
 							addr = arm_read_register(p, rn) + offset_8;
 						else
 							addr = arm_read_register(p, rn) - offset_8;
 					}else{
-						if(GET_RM(ins) == 15){
+						if(GET_RN(ins) == 15 || GET_RM(ins) == 15 || GET_RM(ins) == GET_RM(ins)){
 							return 1; //TODO
 						}
 						if(GET_U(ins))
