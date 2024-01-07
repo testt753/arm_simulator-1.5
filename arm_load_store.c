@@ -541,7 +541,7 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 
 	if(!(addr % 4))
 		return DATA_ABORT;
-	if(GET_B(ins) && !arm_current_mode_has_spsr(p) || GET_RN(ins) == 15)
+	if((GET_B(ins) && !arm_current_mode_has_spsr(p)) || GET_RN(ins) == 15)
 		return 1; //TODO
     if(GET_L(ins)){					//load case
 		if(GET_B(ins)){						// si bit B=1
