@@ -208,7 +208,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
             if(GET_U(ins))
                 addr = GET_IMM12(ins) + arm_read_register(p, rn);
             else
-                addr = GET_IMM12(ins) - arm_read_register(p, rn);
+                addr = arm_read_register(p, rn) - GET_IMM12(ins);
             if(GET_W(ins)){
                 arm_write_register(p, rn, addr);
             }
@@ -440,6 +440,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
         if(GET_B(ins)){
             arm_write_byte(p, addr, get_bits(arm_read_register(p, rd), 7, 0));
         }else{
+			printf("str : %x %x\n", addr, arm_read_register(p, rd));
 			if (addr % 4 != 0) {
 				return DATA_ABORT;
 			}

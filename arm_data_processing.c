@@ -298,22 +298,18 @@ int dp(arm_core p, uint8_t rn, uint8_t rd, uint32_t ops, uint8_t opcd, uint8_t s
 			return 0;
 		case TST:
 			result = v_rn & ops;
-			arm_write_register(p, rd, result);
 			logic_s(p, s, rd, result);
 			return 0;
 		case TEQ:
 			result = v_rn ^ ops;
-			arm_write_register(p, rd, result);
 			logic_s(p, s, rd, result);
 			return 0;
 		case CMP:
 			result = v_rn - ops;
-			arm_write_register(p, rd, result);
 			sb_s(p, s, rd, result, v_rn, ops);
 			return 0;
 		case CMN:
 			tmp = v_rn + ops;
-			arm_write_register(p, rd, result);
 			ad_s(p, s, rd, tmp, v_rn, ops);
 			return 0;
 		case ORR:

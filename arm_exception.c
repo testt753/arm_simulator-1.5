@@ -94,6 +94,7 @@ int arm_exception(arm_core p, uint8_t exception) {
         arm_write_spsr(p, old_cpsr);
         arm_write_register(p, 14, old_pc - 4);
         /*traitement PC*/
+        printf("PREFETCH ABORT\n"); 
         return END_SIMULATION;
         /**/
         arm_write_register(p, 15, arm_read_register(p, 14) - 4);

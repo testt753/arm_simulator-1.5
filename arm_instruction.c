@@ -93,9 +93,9 @@ int execute_instruction(arm_core p, uint32_t x) {
             if (IS_MULT(x))  
                 return arm_data_processing_shift(p, x);
             else if (IS_LS(x))
-                return arm_load_store(p, x); //TODO
+                return arm_load_store(p, x);
             else if (IS_MISC(x)) 
-                return arm_miscellaneous(p, x); //TODO
+                return arm_miscellaneous(p, x);
             else {
                 return arm_data_processing_shift(p, x);
             }
@@ -110,7 +110,7 @@ int execute_instruction(arm_core p, uint32_t x) {
             return arm_load_store(p, x);
 
         case 0b100:
-            return arm_load_store_multiple(p, x); //TODO
+            return arm_load_store_multiple(p, x);
 
         case 0b101:
             return arm_branch(p, x);
@@ -122,17 +122,17 @@ int execute_instruction(arm_core p, uint32_t x) {
             return arm_coprocessor_others_swi(p, x);
 
         default:
-            return UNDEFINED_INSTRUCTION; // TODO
+            return UNDEFINED_INSTRUCTION;
     }
 }
 
 int arm_execute_instruction(arm_core p) {
     uint32_t instruction = 0;
     if (!p)  
-        return INTERRUPT; // TODO
+        return PREFETCH_ABORT;
     int error = arm_fetch(p, &instruction);
-    if (error == INTERRUPT) 
-        return INTERRUPT;
+    if (error == PREFETCH_ABORT) 
+        return PREFETCH_ABORT;
     int result;
 
     result = execute_instruction(p, instruction);
