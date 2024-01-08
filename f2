@@ -1,0 +1,125 @@
+arm_exception.c, 34: Cycle 0, Register read, CPSR, val: 00000010
+arm_exception.c, 35: Cycle 0, Register read, PC_USR, val: BEBEBEC0
+arm_exception.c, 61: Cycle 0, Register write, CPSR, val: 000001D3
+arm_exception.c, 62: Cycle 0, Register write, SPSR_SVC, val: 00000010
+arm_exception.c, 63: Cycle 0, Register write, LR_SVC, val: BEBEBEC0
+arm_exception.c, 64: Cycle 0, Register write, PC_SVC, val: 00000000
+Cycle 0, Register write, SP_SVC, val: 00008000
+arm_instruction.c, 34: Cycle 1, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 207: Cycle 1, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 36: Cycle 1, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 64: Cycle 1, Register write, CPSR, val: 000001D3
+arm_data_processing.c, 250: Cycle 1, Register read, R00_SVC, val: BEBEBEBE
+arm_data_processing.c, 326: Cycle 1, Register write, R00_SVC, val: 00000012
+SVC:   R00=00000012   R01=BEBEBEBE   R02=BEBEBEBE   R03=BEBEBEBE   R04=BEBEBEBE
+       R05=BEBEBEBE   R06=BEBEBEBE   R07=BEBEBEBE   R08=BEBEBEBE   R09=BEBEBEBE
+       R10=BEBEBEBE   R11=BEBEBEBE   R12=BEBEBEBE    SP=00008000    LR=BEBEBEC0
+        PC=00000024   CPSR=000001D3   SPSR=00000010
+arm_instruction.c, 34: Cycle 2, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 207: Cycle 2, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 36: Cycle 2, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 64: Cycle 2, Register write, CPSR, val: 000001D3
+arm_data_processing.c, 250: Cycle 2, Register read, R00_SVC, val: 00000012
+arm_data_processing.c, 326: Cycle 2, Register write, R01_SVC, val: 00000034
+SVC:   R00=00000012   R01=00000034   R02=BEBEBEBE   R03=BEBEBEBE   R04=BEBEBEBE
+       R05=BEBEBEBE   R06=BEBEBEBE   R07=BEBEBEBE   R08=BEBEBEBE   R09=BEBEBEBE
+       R10=BEBEBEBE   R11=BEBEBEBE   R12=BEBEBEBE    SP=00008000    LR=BEBEBEC0
+        PC=00000028   CPSR=000001D3   SPSR=00000010
+arm_instruction.c, 34: Cycle 3, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 82: Cycle 3, Register read, R00_SVC, val: 00000012
+arm_data_processing.c, 36: Cycle 3, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 64: Cycle 3, Register write, CPSR, val: 000001D3
+arm_data_processing.c, 250: Cycle 3, Register read, R01_SVC, val: 00000034
+arm_data_processing.c, 277: Cycle 3, Register write, R00_SVC, val: 00001234
+SVC:   R00=00001234   R01=00000034   R02=BEBEBEBE   R03=BEBEBEBE   R04=BEBEBEBE
+       R05=BEBEBEBE   R06=BEBEBEBE   R07=BEBEBEBE   R08=BEBEBEBE   R09=BEBEBEBE
+       R10=BEBEBEBE   R11=BEBEBEBE   R12=BEBEBEBE    SP=00008000    LR=BEBEBEC0
+        PC=0000002C   CPSR=000001D3   SPSR=00000010
+arm_instruction.c, 34: Cycle 4, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 207: Cycle 4, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 36: Cycle 4, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 64: Cycle 4, Register write, CPSR, val: 000001D3
+arm_data_processing.c, 250: Cycle 4, Register read, R00_SVC, val: 00001234
+arm_data_processing.c, 326: Cycle 4, Register write, R01_SVC, val: 00000056
+SVC:   R00=00001234   R01=00000056   R02=BEBEBEBE   R03=BEBEBEBE   R04=BEBEBEBE
+       R05=BEBEBEBE   R06=BEBEBEBE   R07=BEBEBEBE   R08=BEBEBEBE   R09=BEBEBEBE
+       R10=BEBEBEBE   R11=BEBEBEBE   R12=BEBEBEBE    SP=00008000    LR=BEBEBEC0
+        PC=00000030   CPSR=000001D3   SPSR=00000010
+arm_instruction.c, 34: Cycle 5, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 82: Cycle 5, Register read, R00_SVC, val: 00001234
+arm_data_processing.c, 36: Cycle 5, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 64: Cycle 5, Register write, CPSR, val: 000001D3
+arm_data_processing.c, 250: Cycle 5, Register read, R01_SVC, val: 00000056
+arm_data_processing.c, 277: Cycle 5, Register write, R00_SVC, val: 00123456
+SVC:   R00=00123456   R01=00000056   R02=BEBEBEBE   R03=BEBEBEBE   R04=BEBEBEBE
+       R05=BEBEBEBE   R06=BEBEBEBE   R07=BEBEBEBE   R08=BEBEBEBE   R09=BEBEBEBE
+       R10=BEBEBEBE   R11=BEBEBEBE   R12=BEBEBEBE    SP=00008000    LR=BEBEBEC0
+        PC=00000034   CPSR=000001D3   SPSR=00000010
+arm_instruction.c, 34: Cycle 6, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 207: Cycle 6, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 36: Cycle 6, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 64: Cycle 6, Register write, CPSR, val: 000001D3
+arm_data_processing.c, 250: Cycle 6, Register read, R00_SVC, val: 00123456
+arm_data_processing.c, 326: Cycle 6, Register write, R01_SVC, val: 00000078
+SVC:   R00=00123456   R01=00000078   R02=BEBEBEBE   R03=BEBEBEBE   R04=BEBEBEBE
+       R05=BEBEBEBE   R06=BEBEBEBE   R07=BEBEBEBE   R08=BEBEBEBE   R09=BEBEBEBE
+       R10=BEBEBEBE   R11=BEBEBEBE   R12=BEBEBEBE    SP=00008000    LR=BEBEBEC0
+        PC=00000038   CPSR=000001D3   SPSR=00000010
+arm_instruction.c, 34: Cycle 7, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 82: Cycle 7, Register read, R00_SVC, val: 00123456
+arm_data_processing.c, 36: Cycle 7, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 64: Cycle 7, Register write, CPSR, val: 000001D3
+arm_data_processing.c, 250: Cycle 7, Register read, R01_SVC, val: 00000078
+arm_data_processing.c, 277: Cycle 7, Register write, R00_SVC, val: 12345678
+SVC:   R00=12345678   R01=00000078   R02=BEBEBEBE   R03=BEBEBEBE   R04=BEBEBEBE
+       R05=BEBEBEBE   R06=BEBEBEBE   R07=BEBEBEBE   R08=BEBEBEBE   R09=BEBEBEBE
+       R10=BEBEBEBE   R11=BEBEBEBE   R12=BEBEBEBE    SP=00008000    LR=BEBEBEC0
+        PC=0000003C   CPSR=000001D3   SPSR=00000010
+arm_instruction.c, 34: Cycle 8, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 36: Cycle 8, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 64: Cycle 8, Register write, CPSR, val: 000001D3
+arm_data_processing.c, 250: Cycle 8, Register read, R00_SVC, val: 12345678
+arm_data_processing.c, 326: Cycle 8, Register write, R01_SVC, val: 00002000
+SVC:   R00=12345678   R01=00002000   R02=BEBEBEBE   R03=BEBEBEBE   R04=BEBEBEBE
+       R05=BEBEBEBE   R06=BEBEBEBE   R07=BEBEBEBE   R08=BEBEBEBE   R09=BEBEBEBE
+       R10=BEBEBEBE   R11=BEBEBEBE   R12=BEBEBEBE    SP=00008000    LR=BEBEBEC0
+        PC=00000040   CPSR=000001D3   SPSR=00000010
+arm_instruction.c, 34: Cycle 9, Register read, CPSR, val: 000001D3
+arm_load_store.c, 205: Cycle 9, Register read, R01_SVC, val: 00002000
+arm_load_store.c, 270: Cycle 9, Register read, R00_SVC, val: 12345678
+SVC:   R00=12345678   R01=00002000   R02=BEBEBEBE   R03=BEBEBEBE   R04=BEBEBEBE
+       R05=BEBEBEBE   R06=BEBEBEBE   R07=BEBEBEBE   R08=BEBEBEBE   R09=BEBEBEBE
+       R10=BEBEBEBE   R11=BEBEBEBE   R12=BEBEBEBE    SP=00008000    LR=BEBEBEC0
+        PC=00000044   CPSR=000001D3   SPSR=00000010
+arm_instruction.c, 34: Cycle 10, Register read, CPSR, val: 000001D3
+arm_load_store.c, 205: Cycle 10, Register read, R01_SVC, val: 00002000
+arm_load_store.c, 263: Cycle 10, Register write, R02_SVC, val: 00000012
+SVC:   R00=12345678   R01=00002000   R02=00000012   R03=BEBEBEBE   R04=BEBEBEBE
+       R05=BEBEBEBE   R06=BEBEBEBE   R07=BEBEBEBE   R08=BEBEBEBE   R09=BEBEBEBE
+       R10=BEBEBEBE   R11=BEBEBEBE   R12=BEBEBEBE    SP=00008000    LR=BEBEBEC0
+        PC=00000048   CPSR=000001D3   SPSR=00000010
+arm_instruction.c, 34: Cycle 11, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 207: Cycle 11, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 36: Cycle 11, Register read, CPSR, val: 000001D3
+arm_data_processing.c, 64: Cycle 11, Register write, CPSR, val: 000001D3
+arm_data_processing.c, 250: Cycle 11, Register read, R01_SVC, val: 00002000
+arm_data_processing.c, 277: Cycle 11, Register write, R01_SVC, val: 00002003
+SVC:   R00=12345678   R01=00002003   R02=00000012   R03=BEBEBEBE   R04=BEBEBEBE
+       R05=BEBEBEBE   R06=BEBEBEBE   R07=BEBEBEBE   R08=BEBEBEBE   R09=BEBEBEBE
+       R10=BEBEBEBE   R11=BEBEBEBE   R12=BEBEBEBE    SP=00008000    LR=BEBEBEC0
+        PC=0000004C   CPSR=000001D3   SPSR=00000010
+arm_instruction.c, 34: Cycle 12, Register read, CPSR, val: 000001D3
+arm_load_store.c, 205: Cycle 12, Register read, R01_SVC, val: 00002003
+arm_load_store.c, 263: Cycle 12, Register write, R03_SVC, val: 00000078
+SVC:   R00=12345678   R01=00002003   R02=00000012   R03=00000078   R04=BEBEBEBE
+       R05=BEBEBEBE   R06=BEBEBEBE   R07=BEBEBEBE   R08=BEBEBEBE   R09=BEBEBEBE
+       R10=BEBEBEBE   R11=BEBEBEBE   R12=BEBEBEBE    SP=00008000    LR=BEBEBEC0
+        PC=00000050   CPSR=000001D3   SPSR=00000010
+arm_instruction.c, 34: Cycle 13, Register read, CPSR, val: 000001D3
+arm_exception.c, 34: Cycle 13, Register read, CPSR, val: 000001D3
+arm_exception.c, 35: Cycle 13, Register read, PC_SVC, val: 00000058
+arm_exception.c, 44: Cycle 13, Register read, PC_SVC, val: 00000058
+SVC:   R00=12345678   R01=00002003   R02=00000012   R03=00000078   R04=BEBEBEBE
+       R05=BEBEBEBE   R06=BEBEBEBE   R07=BEBEBEBE   R08=BEBEBEBE   R09=BEBEBEBE
+       R10=BEBEBEBE   R11=BEBEBEBE   R12=BEBEBEBE    SP=00008000    LR=BEBEBEC0
+        PC=00000054   CPSR=000001D3   SPSR=00000010
