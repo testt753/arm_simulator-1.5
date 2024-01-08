@@ -12,4 +12,9 @@ main:
     tst r0, #0x20000000  ; Bit C dans le CPSR (30e bit) flag C (Carry)
     tst r0, #0x10000000  ; Bit V dans le CPSR (29e bit) flag V (Overflow)
 
+    mov r5,#7
+    msrreg   cpsr, r5
+
+    msrimm   cpsr, #0x10
+
     swi 0x123456
