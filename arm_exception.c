@@ -41,10 +41,10 @@ int arm_exception(arm_core p, uint8_t exception) {
      */
     if (exception == SOFTWARE_INTERRUPT) {
         cpsr = arm_read_cpsr(p);
-        set_bits(cpsr, 4, 0, 0b10011);
-        clr_bit(cpsr, 5);
-        set_bit(cpsr, 7);
-        clr_bit(cpsr, 9);
+        cpsr = set_bits(cpsr, 4, 0, 0b10011);
+        cpsr = clr_bit(cpsr, 5);
+        cpsr =set_bit(cpsr, 7);
+        cpsr = clr_bit(cpsr, 9);
         uint32_t value;
         uint32_t address = arm_read_register(p, 15);
         address -= 8;
@@ -69,10 +69,10 @@ int arm_exception(arm_core p, uint8_t exception) {
         arm_write_register(p, 15, 0);
     }else if(exception == UNDEFINED_INSTRUCTION){
         cpsr = arm_read_cpsr(p);
-        set_bits(cpsr, 4, 0, 0b11011);
-        clr_bit(cpsr, 5);
-        set_bit(cpsr, 7);
-        clr_bit(cpsr, 9);
+        cpsr = set_bits(cpsr, 4, 0, 0b11011);
+        cpsr = clr_bit(cpsr, 5);
+        cpsr =set_bit(cpsr, 7);
+        cpsr = clr_bit(cpsr, 9);
         arm_write_cpsr(p, cpsr);
         arm_write_spsr(p, old_cpsr);
         arm_write_register(p, 14, old_pc - 4);
@@ -86,10 +86,10 @@ int arm_exception(arm_core p, uint8_t exception) {
 
     } else if(exception == PREFETCH_ABORT){
         cpsr = arm_read_cpsr(p);
-        set_bits(cpsr, 4, 0, 0b10111);
-        clr_bit(cpsr, 5);
-        set_bit(cpsr, 7);
-        clr_bit(cpsr, 9);
+        cpsr = set_bits(cpsr, 4, 0, 0b10111);
+        cpsr = clr_bit(cpsr, 5);
+        cpsr =set_bit(cpsr, 7);
+        cpsr = clr_bit(cpsr, 9);
         arm_write_cpsr(p, cpsr);
         arm_write_spsr(p, old_cpsr);
         arm_write_register(p, 14, old_pc - 4);
@@ -100,10 +100,10 @@ int arm_exception(arm_core p, uint8_t exception) {
         arm_write_cpsr(p, arm_read_spsr(p));
     } else if(exception == DATA_ABORT){
         cpsr = arm_read_cpsr(p);
-        set_bits(cpsr, 4, 0, 0b10111);
-        clr_bit(cpsr, 5);
-        set_bit(cpsr, 7);
-        clr_bit(cpsr, 9);
+        cpsr = set_bits(cpsr, 4, 0, 0b10111);
+        cpsr = clr_bit(cpsr, 5);
+        cpsr =set_bit(cpsr, 7);
+        cpsr = clr_bit(cpsr, 9);
         arm_write_cpsr(p, cpsr);
         arm_write_spsr(p, old_cpsr);
         arm_write_register(p, 14, old_pc);
@@ -116,10 +116,10 @@ int arm_exception(arm_core p, uint8_t exception) {
         arm_write_cpsr(p, arm_read_spsr(p));
     } else if(exception == INTERRUPT){
         cpsr = arm_read_cpsr(p);
-        set_bits(cpsr, 4, 0, 0b10010);
-        clr_bit(cpsr, 5);
-        set_bit(cpsr, 7);
-        clr_bit(cpsr, 9);
+        cpsr = set_bits(cpsr, 4, 0, 0b10010);
+        cpsr = clr_bit(cpsr, 5);
+        cpsr =set_bit(cpsr, 7);
+        cpsr = clr_bit(cpsr, 9);
         arm_write_cpsr(p, cpsr);
         arm_write_spsr(p, old_cpsr);
         arm_write_register(p, 14, old_pc);
@@ -132,11 +132,11 @@ int arm_exception(arm_core p, uint8_t exception) {
         arm_write_cpsr(p, arm_read_spsr(p));
     }else if(exception == FAST_INTERRUPT){
         cpsr = arm_read_cpsr(p);
-        set_bits(cpsr, 4, 0, 0b10010);
-        clr_bit(cpsr, 5);
-        set_bit(cpsr, 6);
-        set_bit(cpsr, 7);
-        clr_bit(cpsr, 9);
+        cpsr = set_bits(cpsr, 4, 0, 0b10010);
+        cpsr = clr_bit(cpsr, 5);
+        cpsr =set_bit(cpsr, 6);
+        cpsr =set_bit(cpsr, 7);
+        cpsr = clr_bit(cpsr, 9);
         arm_write_cpsr(p, cpsr);
         arm_write_spsr(p, old_cpsr);
         arm_write_register(p, 14, old_pc);
