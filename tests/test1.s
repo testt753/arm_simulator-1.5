@@ -7,11 +7,11 @@ main:
 
 branch_target:
     mov r0, #42
-    and r1, r0, #15    ; r1 = r0 AND 0xF
-    eor r2, r0, #25    ; r2 = r0 EOR 25
-    sub r3, r0, #10    ; r3 = r0 - 10
-    rsb r4, r0, #30    ; r4 = 30 - r0
-    add r5, r0, #5     ; r5 = r0 + 5
+    and r1, r0, #15    
+    eor r2, r0, #25    
+    sub r3, r0, #10    
+    rsb r4, r0, #30    
+    add r5, r0, #5     
     adc r6, r0, #3     ; r6 = r0 + 3 + Carry
     sbc r7, r0, #8     ; r7 = r0 - 8 - (1 - Carry)
     rsc r8, r0, #12    ; r8 = 12 - r0 - (1 - Carry)
