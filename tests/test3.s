@@ -1,23 +1,32 @@
+.equ MEM_BASE, 0x2000
 .global main
 .text
 .data
 
 main:
-    ldr r0, =source_data
-    ldrb r1, [r0]       ; Chargement d'un octet depuis la source
-    strb r1, [r0, #4]   ; Stockage de l'octet dans la destination
-    ldrh r2, [r0, #2]   ; Chargement d'un demi-mot depuis la source
-    strh r2, [r0, #8]   ; Stockage du demi-mot dans la destination
+    ldr r0, =MEM_BASE
+    mov r1, #0x12 
+    strb r1, [r0] 
 
-    ldr r3, [r0, #4]    ; Chargement d'un mot depuis la source (byte offset)
-    str r3, [r0, #12]   ; Stockage du mot dans la destination (halfword offset)
+    mov r1, #0x34
+    strh r1, [r0, #2] 
 
-    ldrb r4, [r0, #3]   ; Chargement d'un octet depuis la source (halfword offset)
-    strb r4, [r0, #15]  ; Stockage de l'octet dans la destination (word offset)
+    mov r1, #0x0078
+    str r1, [r0, #4] 
 
-    ldmia r0!, {r5, r6} ; Chargement des mots suivants dans r5 et r6, et incrémentation de r0
+    
+    ldrb r1, [r0] 
+    strb r1, [r0, #8] 
 
-    stmia r0!, {r7, r8} ; Stockage des mots dans r7 et r8, et incrémentation de r0
+    ldrh r1, [r0, #2] 
+    strh r1, [r0, #0xA] 
+
+    ldr r1, [r0, #4] 
+    str r1, [r0, #0xC] 
+
+    
+    ldrb r1, [r0, #8] 
+    cmp r1, #0x12 
 
     swi 0x123456
 

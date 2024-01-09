@@ -10,7 +10,6 @@ main:
     b end
 not_zero:
     mov r2, #0
-end:
     swi 0x123456
 
 .data
