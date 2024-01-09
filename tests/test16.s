@@ -1,31 +1,31 @@
-.global main
+.data
+    q15_num1:   .hword 0x1234    @ Replace with your Q15 number
+    q15_num2:   .hword 0x5678    @ Replace with another Q15 number
+    q31_num1:   .word 0x12345678 @ Replace with your Q31 number
+    q31_num2:   .word 0x87654321 @ Replace with another Q31 number
 
-.section .data
-data_qadd:  .word 0x7FFFFFFF, 0x80000001, 0x7FFFFFFF, 0x80000001
-data_qsub:  .word 0x7FFFFFFF, 0x80000001, 0x80000001, 0x7FFFFFFF
-data_qdadd: .word 0x7FFFFFFF, 0x80000001, 0x7FFFFFFF, 0x80000001, 0xFFFFFFFF, 0x12345678, 0x87654321, 0x12345678
-data_qdsub: .word 0x7FFFFFFF, 0x80000001, 0x80000001, 0x7FFFFFFF, 0xFFFFFFFF, 0x12345678, 0x87654321, 0x12345678
+.text
+.global _start
 
-.section .text
-main:
-    
-    ldr q0, =data_qadd
-    ldr q1, =data_qadd + 16
-    qadd q2, q0, q1  
+_start:
+    @ Multiply the Q15 numbers in the bottom halves of R0 and R1 and place the Q31 result in R2
+    ldr r0, q15_num1
+    ldr r1, q15_num2
+    smulbb r2, r0, r1
+    qadd r2, r2, r2
 
-    
-    ldr q3, =data_qsub
-    ldr q4, =data_qsub + 16
-    qsub q5, q3, q4  
+    @ Multiply the Q31 number in R0 by the Q15 number in the top half of R1 and place the Q31 result in R2
+    ldr r0, q31_num1
+    ldr r1, q15_num2
+    smulwt r2, r0, r1
+    qadd r2, r2, r2
 
-    
-    ldr q6, =data_qdadd
-    ldr q7, =data_qdadd + 16
-    qdadd q8, q6, q7  
-
-    
-    ldr q9, =data_qdsub
-    ldr q10, =data_qdsub + 16
-    qdsub q11, q9, q10  
+    @ Multiply the Q31 numbers in R0 and R1 and place the Q31 result in R2
+    ldr r0, q31_num1
+    ldr r1, q31_num2
+    smull r3, r2, r0, r1
+    qadd r2, r2, r2
+    @ Your result is now in register R2
 
     swi 0x123456
+
