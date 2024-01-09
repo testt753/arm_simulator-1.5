@@ -340,7 +340,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 							arm_write_byte(p, addr, arm_read_register(p, GET_RM(ins)));
 							arm_write_register(p, rd, (uint8_t)temp);
 						}
-						return 0;
+						break;
 					case 0b1011:
 						uint16_t temp;
 						if(!GET_L(ins)){
@@ -355,6 +355,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 								return DATA_ABORT; //TODO
 							arm_write_register(p, GET_RD(ins), temp);
 						}
+						break;
 					case 0b1101:
 					case 0b1110:
 					case 0b1111:
@@ -401,6 +402,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 								}
 							}
 						}
+						break;
 					default:
 						return UNDEFINED_INSTRUCTION;
 				}

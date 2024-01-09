@@ -55,6 +55,10 @@ arm_core arm_create(registers reg, memory mem) {
         p->mem = mem;
         p->reg = reg;
         p->cycle_count = 0;
+
+        for(int i=0; i<13; i++){
+            arm_write_register(p, i, 0);
+        }
         // We reset the CPU upon creation
         arm_exception(p, RESET);
         // Because we don't have any OS, we initialize sp here

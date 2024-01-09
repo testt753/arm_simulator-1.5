@@ -285,13 +285,13 @@ int dp(arm_core p, uint8_t rn, uint8_t rd, uint32_t ops, uint8_t opcd, uint8_t s
 			ad_s(p, s, rd, tmp, v_rn, ops + Cflag);
 			return 0;
 		case SBC:
-			NCflag = ~get_bit(arm_read_cpsr(p), C);
+			NCflag = !get_bit(arm_read_cpsr(p), C);
 			result = v_rn - ops - NCflag;
 			arm_write_register(p, rd, result);
 			sb_s(p, s, rd, result, v_rn, ops - NCflag);
 			return 0;
 		case RSC:
-			NCflag = ~get_bit(arm_read_cpsr(p), C);
+			NCflag = !get_bit(arm_read_cpsr(p), C);
 			result = ops - v_rn - NCflag;
 			arm_write_register(p, rd, result);
 			sb_s(p, s, rd, result, ops, v_rn - NCflag);
@@ -469,6 +469,7 @@ int arm_data_processing_immediate_msr(arm_core p, uint32_t ins) {
 				fprintf(stderr, "UNPREDICTABLE");
 			}
 		}
+		return 0;
 	}else {
 		uint8_t rn = GET_RN(ins);
 		uint8_t rd = GET_RD(ins);

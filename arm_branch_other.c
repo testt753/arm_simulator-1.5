@@ -162,6 +162,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
         case 0b0111:
             if(GET_COND(ins) != 0b1110)
                 return PREFETCH_ABORT;
+            break;
         case 0b1000:
         case 0b1010:
         case 0b1100:
@@ -199,6 +200,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
                             arm_write_cpsr(p, clr_bit(arm_read_cpsr(p), 27));
                         }
                     }
+                    return 0;
                 case 0b10:
                     operand1 = GET_X(ins) ? (int32_t)((int16_t)(arm_read_register(p, GET_RM(ins)) >> 16)) : (int32_t)((int16_t)(arm_read_register(p, GET_RM(ins))));
                     operand2 = GET_Y(ins) ? (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins)) >> 16)) : (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins))));
@@ -208,10 +210,12 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
                     arm_write_register(p, GET_LO(ins), tmp);
                     v_rhi = v_rhi + (operand1 * operand2 > 0 ? 0xFFFFFFFF : 0) + (tmp > 0xFFFFFFFF);
                     arm_write_register(p, GET_HI(ins), v_rhi);
+                    return 0;
                 case 0b11:
                     operand1 = GET_X(ins) ? (int32_t)((int16_t)(arm_read_register(p, GET_RM(ins)) >> 16)) : (int32_t)((int16_t)(arm_read_register(p, GET_RM(ins))));
                     operand2 = GET_Y(ins) ? (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins)) >> 16)) : (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins))));
                     arm_write_register(p, GET_RD(ins), operand1 * operand2);
+                    return 0;
                 default:
                     return UNDEFINED_INSTRUCTION;
             }

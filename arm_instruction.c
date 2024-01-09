@@ -31,9 +31,9 @@ Contact: Guillaume.Huard@imag.fr
 // Dans arm_instruction.c
 
 int check_condition(arm_core r, uint8_t cond) {
-    uint32_t cpsr  = arm_read_cpsr(r);
+    uint32_t cpsr = arm_read_cpsr(r);
 
-    switch(cond) {
+    switch (cond) {
         case EQ:
             return get_bit(cpsr, Z) != 0;
 
@@ -53,17 +53,17 @@ int check_condition(arm_core r, uint8_t cond) {
             return get_bit(cpsr, N) == 0;
 
         case VS:
-            return get_bit(cpsr, V) != 0; 
+            return get_bit(cpsr, V) != 0;
 
         case VC:
             return get_bit(cpsr, V) == 0;
 
         case HI:
             return get_bit(cpsr, C) != 0 && get_bit(cpsr, Z) == 0;
-        
+
         case LS:
-            return get_bit(cpsr, C) == 0 && get_bit(cpsr, Z) != 0;
-        
+            return get_bit(cpsr, C) == 0 || get_bit(cpsr, Z) != 0;
+
         case GE:
             return (get_bit(cpsr, N) == get_bit(cpsr, V));
 
@@ -74,17 +74,17 @@ int check_condition(arm_core r, uint8_t cond) {
             return (get_bit(cpsr, Z) == 0 && get_bit(cpsr, N) == get_bit(cpsr, V));
 
         case LE:
-            return (get_bit(cpsr, Z) != 0 && get_bit(cpsr, N) != get_bit(cpsr, V));
+            return (get_bit(cpsr, Z) != 0 || get_bit(cpsr, N) != get_bit(cpsr, V));
 
         case AL:
             return 1;
 
         case UN:
             return 1;
-            
+
         default:
             return 0;
-    }  
+    }
 }
 //TODO EXCEPTION
 int execute_instruction(arm_core p, uint32_t x) {
@@ -133,12 +133,9 @@ int arm_execute_instruction(arm_core p) {
     int error = arm_fetch(p, &instruction);
     if (error == PREFETCH_ABORT) 
         return PREFETCH_ABORT;
-    int result;
-
-    result = execute_instruction(p, instruction);
 
     if(check_condition(p, GET_COND(instruction))){
-        return result;
+        return execute_instruction(p, instruction);
     }
     return 0;
 }

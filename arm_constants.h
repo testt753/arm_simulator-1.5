@@ -102,7 +102,7 @@ Contact: Guillaume.Huard@imag.fr
 #define GET_Q_OP(x) get_bits(x, 22, 21)
 #define GET_MISC_MUL_OP(x) get_bits(x, 22, 21)
 #define IS_MULT(x) (GET_COND(x) !=  0b1111 && get_bits(x, 27, 24) == 0b0000 && get_bits(x, 7, 4) == 0b1001)  
-#define IS_LS(x) (GET_COND(x) !=  0b1111 && GET_GROUP(x) == 0b000 && get_bits(x, 7, 4) == 0b1001 && !( get_bit(x ,24) && get_bits(x, 6, 5) == 0b00))    
+#define IS_LS(x) (GET_COND(x) !=  0b1111 && GET_GROUP(x) == 0b000 && get_bit(x, 7) &&  get_bit(x, 4) && !( get_bit(x ,24) && get_bits(x, 6, 5) == 0b00))    
 #define IS_MISC(x) ( GET_COND(x) !=  0b1111 && !( !get_bit(x, 25) &&  get_bit(x, 7) && get_bit(x, 4)) && get_bits(x, 27, 26) == 0b00 && get_bits(x, 24, 23) == 0b10 && get_bit(x, 20) == 0b0 )
 
 char *arm_get_exception_name(unsigned char exception);
