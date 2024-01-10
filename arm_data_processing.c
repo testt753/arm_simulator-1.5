@@ -342,17 +342,17 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 	if(IS_MULT(ins)){
 		uint8_t b23 = get_bit(ins, 23), b22 = get_bit(ins, 22), b21 = get_bit(ins, 21);
 		uint8_t rs = GET_RS(ins);
-		uint8_t rm = GET_RM(ins);
+		uint8_t rm = GET_RN_MULT(ins);
 		uint32_t v_rs = arm_read_register(p, rs);
 		uint32_t v_rm = arm_read_register(p, rm);
 		//TODO TERMINAISON ANTICIPE
 		uint64_t result = v_rm * v_rs;
 		if(!b23 && !b22){
-			uint8_t rd = GET_RD(ins);
+			uint8_t rd = GET_RD_MULT(ins);
 			uint32_t v_rd;
 			v_rd = result & 0xFFFFFFFF;
 			if(b21){
-				uint8_t rn = GET_RN(ins);
+				uint8_t rn = GET_RN_MULT(ins);
 				uint32_t v_rn = arm_read_register(p, rn);
 				v_rd = v_rd + v_rn;
 			}

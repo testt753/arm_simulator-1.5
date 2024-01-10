@@ -167,7 +167,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
         case 0b1010:
         case 0b1100:
         case 0b1110:
-            if(GET_RD(ins) == 15 || GET_RM(ins) == 15 || GET_RN(ins) == 15)
+            if(GET_RD_MULT(ins) == 15 || GET_RM(ins) == 15 || GET_RN_MULT(ins) == 15)
                 fprintf(stderr, "UNPREDICTABLE");
             int32_t operand1, operand2;
             switch(GET_MISC_MUL_OP(ins)){
@@ -176,10 +176,10 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
                     operand1 = GET_X(ins) ? (int32_t)((int16_t)(arm_read_register(p, GET_RM(ins)) >> 16)) : (int32_t)((int16_t)(arm_read_register(p, GET_RM(ins))));
                     operand2 = GET_Y(ins) ? (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins)) >> 16)) : (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins))));
                     
-                    v_rd = operand1 * operand2 + (int32_t) arm_read_register(p, GET_RN(ins));
+                    v_rd = operand1 * operand2 + (int32_t) arm_read_register(p, GET_RN_MULT(ins));
 
                     // Vérification du débordement
-                    if (OverflowFrom(operand1 * operand2, (int32_t) arm_read_register(p, GET_RN(ins)), v_rd, 0)) {
+                    if (OverflowFrom(operand1 * operand2, (int32_t) arm_read_register(p, GET_RN_MULT(ins)), v_rd, 0)) {
                         arm_write_cpsr(p, set_bit(arm_read_cpsr(p), 27));
                     } else {
                         arm_write_cpsr(p, clr_bit(arm_read_cpsr(p), 27));
@@ -189,12 +189,12 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
                     operand2 = GET_Y(ins) ? (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins)) >> 16)) : (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins))));
                     if(GET_X(ins)){
                         int64_t tmp1 = operand2 * arm_read_register(p, GET_RM(ins));
-                        arm_write_register(p, GET_RD(ins), (uint32_t)(tmp1 >> 16));
+                        arm_write_register(p, GET_RD_MULT(ins), (uint32_t)(tmp1 >> 16));
                     }else{
                         int64_t tmp1 = operand2 * arm_read_register(p, GET_RM(ins));
-                        v_rd = (int32_t)(tmp1 >> 16) + arm_read_register(p, GET_RN(ins));
-                        arm_write_register(p, GET_RD(ins), v_rd);
-                        if (OverflowFrom(tmp1, arm_read_register(p, GET_RN(ins)), v_rd, 0)) {
+                        v_rd = (int32_t)(tmp1 >> 16) + arm_read_register(p, GET_RN_MULT(ins));
+                        arm_write_register(p, GET_RD_MULT(ins), v_rd);
+                        if (OverflowFrom(tmp1, arm_read_register(p, GET_RN_MULT(ins)), v_rd, 0)) {
                             arm_write_cpsr(p, set_bit(arm_read_cpsr(p), 27));
                         } else {
                             arm_write_cpsr(p, clr_bit(arm_read_cpsr(p), 27));
@@ -214,7 +214,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
                 case 0b11:
                     operand1 = GET_X(ins) ? (int32_t)((int16_t)(arm_read_register(p, GET_RM(ins)) >> 16)) : (int32_t)((int16_t)(arm_read_register(p, GET_RM(ins))));
                     operand2 = GET_Y(ins) ? (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins)) >> 16)) : (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins))));
-                    arm_write_register(p, GET_RD(ins), operand1 * operand2);
+                    arm_write_register(p, GET_RD_MULT(ins), operand1 * operand2);
                     return 0;
                 default:
                     return UNDEFINED_INSTRUCTION;

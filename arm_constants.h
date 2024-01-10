@@ -76,6 +76,8 @@ Contact: Guillaume.Huard@imag.fr
 #define GET_SIGNED_MUL_OP(x) get_bits(x, 22, 21)   
 #define GET_RN(x) get_bits(x, 19, 16)
 #define GET_RD(x) get_bits(x, 15, 12)
+#define GET_RD_MULT(x) get_bits(x, 19, 16)
+#define GET_RN_MULT(x) get_bits(x, 15, 12)
 #define GET_RS(x) get_bits(x, 11, 8)
 #define GET_RM(x) get_bits(x, 3, 0)
 #define GET_S(x) get_bit(x, 20)
