@@ -64,7 +64,7 @@ void update_cpsr(arm_core p, int bZ, int bN, int bC, int bV) {
 	arm_write_cpsr(p, cpsr);
 }
 
-uint32_t get_shift(arm_core p, uint32_t ins, int S, int reg) {
+uint32_t get_shift(arm_core p, uint32_t ins, int *c, int reg) {
 
 	uint8_t rm = GET_RM(ins);
 	uint8_t amount;
@@ -78,23 +78,32 @@ uint32_t get_shift(arm_core p, uint32_t ins, int S, int reg) {
 		amount = get_bits(v_rs, 7, 0);
 	}
 	uint32_t result;
-	uint32_t shifter_carry_out = -1;
+	int shifter_carry_out = -1;
 	uint32_t value = arm_read_register(p, rm);
 
 	switch(GET_SHIFT(ins)) {
 
-		case LSL:     
+		case LSL:
 			if(amount == 0) { 
-				result = value;  
+				result = value; 
+				shifter_carry_out = get_bit(arm_read_cpsr(p), C);
 			} else {
 				if(!reg || amount < 32) {
 					result = value << amount;
 					shifter_carry_out = get_bit(value, (32 - amount));
 				}else if(reg) {
-					result = 0;
-					if(amount == 32){
+					
+					if(amount == 0){
+						result = value;
+						shifter_carry_out = get_bit(arm_read_cpsr(p), C);
+					}else if(amount < 32){
+						result = value  << amount;
+						shifter_carry_out = get_bit(value, (32 - amount));
+					}else if(amount == 32){
+						result = 0;
 						shifter_carry_out = get_bit(value, 0);
 					}else{
+						result = 0;
 						shifter_carry_out = 0;
 					}
 				}
@@ -105,6 +114,7 @@ uint32_t get_shift(arm_core p, uint32_t ins, int S, int reg) {
 			if(!reg){
 				if(amount == 0) {
 					result = 0;  
+					shifter_carry_out = get_bit(value, 31);
 				} else { 
 					result = value >> amount;
 					shifter_carry_out = get_bit(value, (amount - 1));
@@ -112,6 +122,7 @@ uint32_t get_shift(arm_core p, uint32_t ins, int S, int reg) {
 			}else{
 				if(amount == 0) {
 					result = value;
+					shifter_carry_out = get_bit(arm_read_cpsr(p), C);
 				}else if(amount < 32) {
 					result = value >> amount;
 					shifter_carry_out = get_bit(value, (amount - 1));
@@ -129,13 +140,13 @@ uint32_t get_shift(arm_core p, uint32_t ins, int S, int reg) {
 		case ASR:
 			if(!reg){
 				if(amount == 0) {
-					uint8_t tmp = get_bit(value, (amount - 1));
+					uint8_t tmp = get_bit(value, 31);
 					if(!tmp){
 						result = 0;
 					}else{
 						result = 0xFFFFFFFF;
 					}
-					shifter_carry_out = tmp;
+					shifter_carry_out = tmp;;
 				} else {
 					result = (int32_t)value >> amount;
 					shifter_carry_out = get_bit(value, (amount - 1));
@@ -143,8 +154,9 @@ uint32_t get_shift(arm_core p, uint32_t ins, int S, int reg) {
 			}else {
 				if(amount == 0) {
 					result = value;
-				}else if(amount < 32) {
-					uint8_t tmp = get_bit(value, (amount - 1));
+					shifter_carry_out = get_bit(arm_read_cpsr(p), C);
+				}else if(amount >= 32) {
+					uint8_t tmp = get_bit(value, 31);
 					if(!tmp){
 						result = 0;
 					}else{
@@ -152,12 +164,8 @@ uint32_t get_shift(arm_core p, uint32_t ins, int S, int reg) {
 					}
 					shifter_carry_out = tmp;
 				}else {
-					if(get_bit(value, 31) == 0){
-						result = 0;
-					}else{
-						result = 0xFFFFFFFF;
-					}
-					shifter_carry_out = get_bit(value, 31);
+					result = (int32_t)value >> amount;
+					shifter_carry_out = get_bit(value, (amount - 1));
 				}
 			}
 		break;
@@ -165,11 +173,7 @@ uint32_t get_shift(arm_core p, uint32_t ins, int S, int reg) {
 		case ROR:
 			if(!reg){
 				if(amount == 0) { 
-					if(arm_read_cpsr(p) & C) {
-						result = (value >> 1) | (1 << 31);  
-					} else {
-						result = value >> 1;
-					}
+					result = (value >> 1) | (get_bit(arm_read_cpsr(p), C) << 31);
 				} else {
 					result = (value >> amount) | 
 							(value << (32 - amount)); 
@@ -178,6 +182,7 @@ uint32_t get_shift(arm_core p, uint32_t ins, int S, int reg) {
 			}else {
 				if(amount == 0){
 					result = value;
+					shifter_carry_out = get_bit(arm_read_cpsr(p), C);
 				}else{
 					amount = get_bits(v_rs, 4, 0);
 					if(amount){
@@ -192,12 +197,13 @@ uint32_t get_shift(arm_core p, uint32_t ins, int S, int reg) {
 			}
 		break;
 	}
-    if(S)
-	    update_cpsr(p, -1, -1, shifter_carry_out, -1);
+	if(c)
+		*c = shifter_carry_out;
+
 	return result;
 }
 
-uint32_t get_shift_imm(arm_core p, uint8_t imm, uint8_t rotate_amt) {
+uint32_t get_shift_imm(arm_core p, uint8_t imm, uint8_t rotate_amt, int *c) {
 
 	uint32_t shifter_op;
 	uint32_t shifter_carry_out;
@@ -210,19 +216,20 @@ uint32_t get_shift_imm(arm_core p, uint8_t imm, uint8_t rotate_amt) {
 		shifter_op = (imm >> rotate_amt*2) | (imm << (32 - rotate_amt*2)); 
 		shifter_carry_out = get_bit(shifter_op, 31); 
 	}
-	update_cpsr(p, -1, -1, shifter_carry_out, -1);	
+	if(c)
+		*c = shifter_carry_out;
 	return shifter_op; 
 }
 
 
 
-void logic_s(arm_core p, uint8_t s, uint8_t rd, uint32_t result){
+void logic_s(arm_core p, uint8_t s, uint8_t rd, uint32_t result, int shifter_carry_out){
 	if(s && rd == 15){
 		if(arm_current_mode_has_spsr(p)){
 			arm_write_cpsr(p, arm_read_spsr(p));
 		}
 	} else if(s){
-		update_cpsr(p, result == 0, get_bit(result, 31), -1, -1);
+		update_cpsr(p, result == 0, get_bit(result, 31), shifter_carry_out, -1);
 	}
 }
 
@@ -244,7 +251,7 @@ void ad_s(arm_core p, uint8_t s, uint8_t rd, uint64_t result, uint32_t op1, uint
 		update_cpsr(p, result==0, get_bit(result, 31), result > 0xFFFFFFFF, OverflowFrom(op1, op2, (uint32_t)result, 0));
 	}
 }
-int dp(arm_core p, uint8_t rn, uint8_t rd, uint32_t ops, uint8_t opcd, uint8_t s){
+int dp(arm_core p, uint8_t rn, uint8_t rd, uint32_t ops, uint8_t opcd, uint8_t s, int shifter_carry_out){
 	uint64_t tmp;
 	uint32_t result = 0;
 	uint32_t v_rn = arm_read_register(p, rn);
@@ -254,12 +261,12 @@ int dp(arm_core p, uint8_t rn, uint8_t rd, uint32_t ops, uint8_t opcd, uint8_t s
 		case AND:
 			result = v_rn & ops;
 			arm_write_register(p, rd, result);
-			logic_s(p, s, rd, result);
+			logic_s(p, s, rd, result, shifter_carry_out);
 			return 0;
 		case EOR:
 			result = v_rn ^ ops;
 			arm_write_register(p, rd, result);
-			logic_s(p, s, rd, result);
+			logic_s(p, s, rd, result, shifter_carry_out);
 			return 0;
 		case SUB:
 			result = v_rn - ops;
@@ -272,14 +279,14 @@ int dp(arm_core p, uint8_t rn, uint8_t rd, uint32_t ops, uint8_t opcd, uint8_t s
 			sb_s(p, s, rd, result, ops, v_rn);
 			return 0;
 		case ADD:
-			tmp = v_rn + ops;
+			tmp = (uint64_t)v_rn + (uint64_t)ops;
 			result = tmp;
 			arm_write_register(p, rd, result);
 			ad_s(p, s, rd, tmp, v_rn, ops);
 			return 0;
 		case ADC:
 			Cflag = get_bit(arm_read_cpsr(p), C);
-			tmp = v_rn + ops + Cflag;
+			tmp = (uint64_t)v_rn + (uint64_t)ops + Cflag;
 			result = tmp;
 			arm_write_register(p, rd, result);
 			ad_s(p, s, rd, tmp, v_rn, ops + Cflag);
@@ -298,39 +305,39 @@ int dp(arm_core p, uint8_t rn, uint8_t rd, uint32_t ops, uint8_t opcd, uint8_t s
 			return 0;
 		case TST:
 			result = v_rn & ops;
-			logic_s(p, s, rd, result);
+			logic_s(p, s, rd, result, shifter_carry_out);
 			return 0;
 		case TEQ:
 			result = v_rn ^ ops;
-			logic_s(p, s, rd, result);
+			logic_s(p, s, rd, result, shifter_carry_out);
 			return 0;
 		case CMP:
 			result = v_rn - ops;
 			sb_s(p, s, rd, result, v_rn, ops);
 			return 0;
 		case CMN:
-			tmp = v_rn + ops;
+			tmp = (uint64_t)v_rn + (uint64_t)ops;
 			ad_s(p, s, rd, tmp, v_rn, ops);
 			return 0;
 		case ORR:
 			result = v_rn | ops;
 			arm_write_register(p, rd, result);
-			logic_s(p, s, rd, result);
+			logic_s(p, s, rd, result, shifter_carry_out);
 			return 0;
 		case MOV:
 			result = ops;
 			arm_write_register(p, rd, result);
-			logic_s(p, s, rd, result);
+			logic_s(p, s, rd, result, shifter_carry_out);
 			return 0;
 		case BIC:
 			result = v_rn & ~ ops;
 			arm_write_register(p, rd, result);
-			logic_s(p, s, rd, result);
+			logic_s(p, s, rd, result, shifter_carry_out);
 			return 0;
 		case MVN:
 			result = ~ops;
 			arm_write_register(p, rd, result);
-			logic_s(p, s, rd, result);
+			logic_s(p, s, rd, result, shifter_carry_out);
 			return 0;
 		default:
 			return UNDEFINED_INSTRUCTION;
@@ -342,11 +349,11 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 	if(IS_MULT(ins)){
 		uint8_t b23 = get_bit(ins, 23), b22 = get_bit(ins, 22), b21 = get_bit(ins, 21);
 		uint8_t rs = GET_RS(ins);
-		uint8_t rm = GET_RN_MULT(ins);
+		uint8_t rm = GET_RM(ins);
 		uint32_t v_rs = arm_read_register(p, rs);
 		uint32_t v_rm = arm_read_register(p, rm);
 		//TODO TERMINAISON ANTICIPE
-		uint64_t result = v_rm * v_rs;
+		uint64_t result = (uint64_t)v_rm * (uint64_t)v_rs;
 		if(!b23 && !b22){
 			uint8_t rd = GET_RD_MULT(ins);
 			uint32_t v_rd;
@@ -382,7 +389,7 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 						}
 					}
 				}else{
-					int64_t product = (int64_t)((int32_t)v_rm) * ((int32_t)v_rs); //TODO
+					int64_t product = ((int64_t)(int32_t)v_rm) * ((int64_t)(int32_t)v_rs);
 					v_rhi = (uint32_t)(product >> 32) & 0xFFFFFFFF;
 					v_rlo = (uint32_t) product & 0xFFFFFFFF;
 					if(b21){
@@ -412,10 +419,11 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 		uint32_t ops;
 		uint8_t opcd = GET_OPCD(ins);
 		uint8_t s = GET_S(ins);
+		int shifter_carry_out;
 
 		if(!get_bit(ins, 4)){
 			if(rn != 15)
-				ops = get_shift(p, ins, 1, 0);
+				ops = get_shift(p, ins, &shifter_carry_out, 0);
 			else{
 				//uint64_t tmp;
 				ops = arm_read_register(p,GET_RM(ins));
@@ -425,7 +433,7 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 			}
 		}else{
 			if(rn != 15 && GET_RS(ins) != 15)
-				ops = get_shift(p, ins, 1, 1);
+				ops = get_shift(p, ins, &shifter_carry_out, 1);
 			else{
 				//uint64_t tmp;
 				ops = arm_read_register(p,GET_RM(ins));
@@ -434,14 +442,14 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 				//update_cpsr(p, -1, -1, tmp > 0xFFFFFFFF, -1); 
 			}
 		}
-		return dp(p, rn, rd, ops, opcd, s);
+		return dp(p, rn, rd, ops, opcd, s, shifter_carry_out);
 	}
     return UNDEFINED_INSTRUCTION;
 }
 
 int arm_data_processing_immediate_msr(arm_core p, uint32_t ins) {
 	if(IS_MISC(ins)) {
-		uint32_t operand = get_shift_imm(p, GET_IMM8(ins), GET_ROT_IMM(ins));
+		uint32_t operand = get_shift_imm(p, GET_IMM8(ins), GET_ROT_IMM(ins), NULL);
 		if(operand & UnallocMask){
 			fprintf(stderr, "UNPREDICTABLE");
 		}
@@ -471,12 +479,13 @@ int arm_data_processing_immediate_msr(arm_core p, uint32_t ins) {
 		}
 		return 0;
 	}else {
+		int shifter_carry_out;
 		uint8_t rn = GET_RN(ins);
 		uint8_t rd = GET_RD(ins);
-		uint32_t ops = get_shift_imm(p, GET_IMM8(ins), GET_ROT_IMM(ins));
+		uint32_t ops = get_shift_imm(p, GET_IMM8(ins), GET_ROT_IMM(ins), &shifter_carry_out);
 		uint8_t opcd = GET_OPCD(ins);
 		uint8_t s = GET_S(ins);
-		return dp(p, rn, rd, ops, opcd, s);
+		return dp(p, rn, rd, ops, opcd, s, shifter_carry_out);
 	}
     return UNDEFINED_INSTRUCTION;
 }

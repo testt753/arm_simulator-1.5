@@ -188,11 +188,11 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
                 case 0b01:
                     operand2 = GET_Y(ins) ? (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins)) >> 16)) : (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins))));
                     if(GET_X(ins)){
-                        int64_t tmp1 = operand2 * arm_read_register(p, GET_RM(ins));
+                        int64_t tmp1 = (int64_t)operand2 * (int64_t)arm_read_register(p, GET_RM(ins));
                         arm_write_register(p, GET_RD_MULT(ins), (uint32_t)(tmp1 >> 16));
                     }else{
-                        int64_t tmp1 = operand2 * arm_read_register(p, GET_RM(ins));
-                        v_rd = (int32_t)(tmp1 >> 16) + arm_read_register(p, GET_RN_MULT(ins));
+                        int64_t tmp1 = (int64_t)operand2 * (int64_t)arm_read_register(p, GET_RM(ins));
+                        v_rd = (int32_t)(int16_t)(tmp1 >> 16) + arm_read_register(p, GET_RN_MULT(ins));
                         arm_write_register(p, GET_RD_MULT(ins), v_rd);
                         if (OverflowFrom(tmp1, arm_read_register(p, GET_RN_MULT(ins)), v_rd, 0)) {
                             arm_write_cpsr(p, set_bit(arm_read_cpsr(p), 27));
@@ -206,7 +206,7 @@ int arm_miscellaneous(arm_core p, uint32_t ins) {
                     operand2 = GET_Y(ins) ? (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins)) >> 16)) : (int32_t)((int16_t)(arm_read_register(p, GET_RS(ins))));
                     uint32_t v_rhi = arm_read_register(p, GET_HI(ins));
                     uint32_t v_rlo = arm_read_register(p, GET_LO(ins));
-                    uint64_t tmp = (operand1 * operand2) + v_rlo;
+                    uint64_t tmp = (int64_t)(operand1 * operand2) + (int64_t)(int32_t)v_rlo;
                     arm_write_register(p, GET_LO(ins), tmp);
                     v_rhi = v_rhi + (operand1 * operand2 > 0 ? 0xFFFFFFFF : 0) + (tmp > 0xFFFFFFFF);
                     arm_write_register(p, GET_HI(ins), v_rhi);

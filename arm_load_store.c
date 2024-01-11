@@ -62,7 +62,7 @@ void update_cpsr_ls(arm_core p, int bZ, int bN, int bC, int bV) {
 	arm_write_cpsr(p, cpsr);
 }
 
-uint32_t get_shift_ls(arm_core p, uint32_t ins, int S, int reg) {
+uint32_t get_shift_ls(arm_core p, uint32_t ins, int *c, int reg) {
 
 	uint8_t rm = GET_RM(ins);
 	uint8_t amount;
@@ -81,18 +81,27 @@ uint32_t get_shift_ls(arm_core p, uint32_t ins, int S, int reg) {
 
 	switch(GET_SHIFT(ins)) {
 
-		case LSL:     
+		case LSL:
 			if(amount == 0) { 
-				result = value;  
+				result = value; 
+				shifter_carry_out = get_bit(arm_read_cpsr(p), C);
 			} else {
 				if(!reg || amount < 32) {
 					result = value << amount;
 					shifter_carry_out = get_bit(value, (32 - amount));
 				}else if(reg) {
-					result = 0;
-					if(amount == 32){
+					
+					if(amount == 0){
+						result = value;
+						shifter_carry_out = get_bit(arm_read_cpsr(p), C);
+					}else if(amount < 32){
+						result = value  << amount;
+						shifter_carry_out = get_bit(value, (32 - amount));
+					}else if(amount == 32){
+						result = 0;
 						shifter_carry_out = get_bit(value, 0);
 					}else{
+						result = 0;
 						shifter_carry_out = 0;
 					}
 				}
@@ -103,6 +112,7 @@ uint32_t get_shift_ls(arm_core p, uint32_t ins, int S, int reg) {
 			if(!reg){
 				if(amount == 0) {
 					result = 0;  
+					shifter_carry_out = get_bit(value, 31);
 				} else { 
 					result = value >> amount;
 					shifter_carry_out = get_bit(value, (amount - 1));
@@ -110,6 +120,7 @@ uint32_t get_shift_ls(arm_core p, uint32_t ins, int S, int reg) {
 			}else{
 				if(amount == 0) {
 					result = value;
+					shifter_carry_out = get_bit(arm_read_cpsr(p), C);
 				}else if(amount < 32) {
 					result = value >> amount;
 					shifter_carry_out = get_bit(value, (amount - 1));
@@ -127,13 +138,13 @@ uint32_t get_shift_ls(arm_core p, uint32_t ins, int S, int reg) {
 		case ASR:
 			if(!reg){
 				if(amount == 0) {
-					uint8_t tmp = get_bit(value, (amount - 1));
+					uint8_t tmp = get_bit(value, 31);
 					if(!tmp){
 						result = 0;
 					}else{
 						result = 0xFFFFFFFF;
 					}
-					shifter_carry_out = tmp;
+					shifter_carry_out = tmp;;
 				} else {
 					result = (int32_t)value >> amount;
 					shifter_carry_out = get_bit(value, (amount - 1));
@@ -141,8 +152,9 @@ uint32_t get_shift_ls(arm_core p, uint32_t ins, int S, int reg) {
 			}else {
 				if(amount == 0) {
 					result = value;
-				}else if(amount < 32) {
-					uint8_t tmp = get_bit(value, (amount - 1));
+					shifter_carry_out = get_bit(arm_read_cpsr(p), C);
+				}else if(amount >= 32) {
+					uint8_t tmp = get_bit(value, 31);
 					if(!tmp){
 						result = 0;
 					}else{
@@ -150,12 +162,8 @@ uint32_t get_shift_ls(arm_core p, uint32_t ins, int S, int reg) {
 					}
 					shifter_carry_out = tmp;
 				}else {
-					if(get_bit(value, 31) == 0){
-						result = 0;
-					}else{
-						result = 0xFFFFFFFF;
-					}
-					shifter_carry_out = get_bit(value, 31);
+					result = (int32_t)value >> amount;
+					shifter_carry_out = get_bit(value, (amount - 1));
 				}
 			}
 		break;
@@ -163,11 +171,7 @@ uint32_t get_shift_ls(arm_core p, uint32_t ins, int S, int reg) {
 		case ROR:
 			if(!reg){
 				if(amount == 0) { 
-					if(arm_read_cpsr(p) & C) {
-						result = (value >> 1) | (1 << 31);  
-					} else {
-						result = value >> 1;
-					}
+					result = (value >> 1) | (get_bit(arm_read_cpsr(p), C) << 31);
 				} else {
 					result = (value >> amount) | 
 							(value << (32 - amount)); 
@@ -176,6 +180,7 @@ uint32_t get_shift_ls(arm_core p, uint32_t ins, int S, int reg) {
 			}else {
 				if(amount == 0){
 					result = value;
+					shifter_carry_out = get_bit(arm_read_cpsr(p), C);
 				}else{
 					amount = get_bits(v_rs, 4, 0);
 					if(amount){
@@ -190,8 +195,8 @@ uint32_t get_shift_ls(arm_core p, uint32_t ins, int S, int reg) {
 			}
 		break;
 	}
-    if(S)
-	    update_cpsr_ls(p, -1, -1, shifter_carry_out, -1);
+	if(c)
+		*c = shifter_carry_out;
 	return result;
 }
 
@@ -234,7 +239,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 				if(!GET_SHIFT_IMM(ins) && !GET_SHIFT(ins)){
 					index = arm_read_register(p, rm);
 				}else{
-					index = get_shift_ls(p, ins, 0, 0);
+					index = get_shift_ls(p, ins, NULL, 0);
 				}
 				if(GET_U(ins))
 					addr = arm_read_register(p, rn) + index;
@@ -254,7 +259,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 				if(!GET_SHIFT_IMM(ins) && !GET_SHIFT(ins)){
 					index = arm_read_register(p, rm);
 				}else{
-					index = get_shift_ls(p, ins, 0, 0);
+					index = get_shift_ls(p, ins, NULL, 0);
 				}
 				if(GET_U(ins))
 					addr = arm_read_register(p, rn) + index;
@@ -321,9 +326,9 @@ int arm_load_store(arm_core p, uint32_t ins) {
 						if(GET_RM(ins) == 15 || GET_RN(ins) == 15 || GET_RD(ins) == 15 || GET_RM(ins) == GET_RN(ins) || GET_RN(ins) == GET_RD(ins))
 							fprintf(stderr, "UNPREDICTABLE");
 						
+						addr = arm_read_register(p, GET_RN(ins));
 						if(!GET_B(ins)){
 							uint32_t temp;
-							arm_read_word(p, addr, &temp);
 							if (addr % 4 != 0) {
 								/*
 								// Adresse non alignée
@@ -332,13 +337,16 @@ int arm_load_store(arm_core p, uint32_t ins) {
 								*/
 								return DATA_ABORT;
 							}
+							arm_read_word(p, addr, &temp);
+							int rotate_amount = 8 * (addr % 4);
+							temp = (temp >> rotate_amount) | (temp << (32 - rotate_amount));
 							arm_write_word(p, addr, arm_read_register(p, GET_RM(ins)));
 							arm_write_register(p, GET_RD(ins), temp);
 						}else{
 							uint8_t temp;
 							arm_read_byte(p ,addr, &temp);
-							arm_write_byte(p, addr, arm_read_register(p, GET_RM(ins)));
-							arm_write_register(p, rd, (uint8_t)temp);
+							arm_write_byte(p, addr, (uint8_t)arm_read_register(p, GET_RM(ins)));
+							arm_write_register(p, rd, temp);
 						}
 						break;
 					case 0b1011:
@@ -363,7 +371,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 							if(!get_bit(ins, 5)){
 								uint8_t data;
 								arm_read_byte(p, addr, &data);
-								arm_write_register(p, GET_RD(ins), (int32_t)data);
+								arm_write_register(p, GET_RD(ins), (int32_t)(int8_t)data);
 							}else{
 								uint16_t data;
 								
@@ -372,7 +380,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 								}else
 									fprintf(stderr, "UNPREDICTABLE");
 								
-								arm_write_register(p, GET_RD(ins), (int32_t)data);
+								arm_write_register(p, GET_RD(ins), (int32_t)(int16_t)data);
 							}
 						}else{
 							if(!get_bit(ins, 5)){
@@ -429,20 +437,26 @@ int arm_load_store(arm_core p, uint32_t ins) {
 				else
 					arm_write_cpsr(p, clr_bit(arm_read_cpsr(p), 5));
 			} else{
-				arm_write_register(p, rd, data);
+				if(!GET_P(ins) && GET_W(ins)){
+					arm_write_register(p, rd, (int32_t)data);
+				}else
+					arm_write_register(p, rd, data);
 			}
         }else{
             uint8_t tmp = 0;
             arm_read_byte(p ,addr, &tmp);
             data = tmp;
-            arm_write_register(p, rd, data);
+			if(!GET_P(ins) && GET_W(ins)){
+				arm_write_register(p, rd, (int32_t)tmp);
+				arm_write_register(p, rn, addr);
+			}else
+            	arm_write_register(p, rd, data);
         }
         return 0;
     }else{
         if(GET_B(ins)){
             arm_write_byte(p, addr, get_bits(arm_read_register(p, rd), 7, 0));
         }else{
-			printf("str : %x %x\n", addr, arm_read_register(p, rd));
 			if (addr % 4 != 0) {
 				return DATA_ABORT;
 			}
@@ -508,7 +522,7 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 	//si on incremente apres p=0 & u=1
 	if (!GET_P(ins) && GET_U(ins)){
 		addr_start=v_rn;
-		addr_end=v_rn+((reg_select*4)-4);
+		addr_end=v_rn+(reg_select*4)-4;
 		if (GET_W(ins)){
 			arm_write_register(p, rn, v_rn+(reg_select*4));
 		}
@@ -525,7 +539,7 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
 
 	//si on decremente apres p=0 & u=0
 	else if (!GET_P(ins) && !GET_U(ins)){
-		addr_start=v_rn-((reg_select*4)+4);
+		addr_start=v_rn-(reg_select*4)+4;
 		addr_end=v_rn;
 		if (GET_W(ins)){
 			arm_write_register(p, rn, v_rn-(reg_select*4));
